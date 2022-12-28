@@ -3,11 +3,11 @@ import { measureText, NODE_CONFIG } from './node/base/index.js';
 
 // 独属于每一个节点的render函数，在G6中会被抹除，通过原型保存
 class TEXT_CONFIG extends NODE_CONFIG {
-  className = 'my-text';
+  className = 'TextComponent';
   html = {
-    attributes: {},
-    properties: {
-      text: '姓名',
+    text: {
+      type: 'string',
+      value: '姓名',
     },
   };
   css = {
@@ -34,8 +34,8 @@ function registerText(configModule) {
       },
       draw(cfg, group) {
         const self = this,
-          { attributes, properties } = cfg.config.html,
-          { text } = properties;
+          { html } = cfg.config,
+          text = html.text.value;
         // 获取配置中的 Combo 内边距
         cfg.padding = [5, 5, 5, 5];
         // 获取样式配置，style.width 与 style.height 对应 rect Combo 位置说明图中的 width 与 height
@@ -54,8 +54,8 @@ function registerText(configModule) {
         });
       },
       afterDraw(cfg, group) {
-        const { attributes, properties } = cfg.config.html,
-          { text } = properties,
+        const { html } = cfg.config,
+          text = html.text.value,
           width = measureText(text, '14px');
         group.addShape('text', {
           id: 'text',
@@ -73,8 +73,8 @@ function registerText(configModule) {
         });
       },
       update(cfg, node) {
-        const { attributes, properties } = cfg.config.html,
-          { text } = properties,
+        const { html } = cfg.config,
+          text = html.text.value,
           textLength = measureText(text, '14px'),
           group = node.get('group');
         let textShape, box;
@@ -90,13 +90,6 @@ function registerText(configModule) {
         box.attr({
           width: textLength + 10,
         });
-      },
-      afterUpdate(cfg, item) {
-        // const { json } = cfg,
-        //     { text } = json,
-        //     group = item.getContainer();
-        // let textShape = group.findById('text');
-        // textShape.attr('text', text);
       },
     },
     'rect'

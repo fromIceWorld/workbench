@@ -23,8 +23,7 @@ export class ConfigTabComponent implements OnInit {
     return Array.isArray(value);
   }
   updateConfig(e) {
-    // this.updatePoint.emit(this.config);
-    console.log(this.config);
+    this.updatePoint.emit(this.config);
   }
   selectChange(e) {
     this.updatePoint.emit(this.config);

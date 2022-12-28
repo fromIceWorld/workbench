@@ -435,8 +435,9 @@ export class ViewTabComponent implements OnInit {
     let target = this.focusCombo ? 'focusCombo' : 'focusNode';
     const model = this[target]._cfg.model,
       config = model.config;
+    console.log(model.config.html, newConfig);
     Object.assign(model.config.html, newConfig);
-    console.log(config);
+    console.log(config, this.focusNode);
     // 节点需要更新 view
     if (this.focusNode) {
       // 更新图
@@ -621,8 +622,7 @@ export class ViewTabComponent implements OnInit {
     graph.on('node:click', (evt) => {
       this.focusCombo = null;
       const { item } = evt,
-        json = item._cfg.model.config.html,
-        { attributes, properties, config } = json;
+        { html: config } = item._cfg.model.config;
       this.unFocus(this.focusNode);
       this.focus(item); //focus当前节点
       this.focusNode = item;
@@ -637,11 +637,9 @@ export class ViewTabComponent implements OnInit {
       });
       // 展示combo  json 数据
       const { item } = evt,
-        json = item._cfg.model.config.html,
-        { attributes, properties } = json;
+        { html: config } = item._cfg.model.config;
       this.focusCombo = item;
-      this.config = [attributes, properties];
-      this.focusPoint.emit([attributes, properties]);
+      this.focusPoint.emit(config);
     });
     graph.on('node:mouseenter', (evt) => {
       const { item } = evt;

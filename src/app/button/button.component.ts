@@ -1,5 +1,5 @@
 import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
-
+import { transformValue } from 'src/common';
 @Component({
   selector: 'app-button',
   templateUrl: './button.component.html',
@@ -29,15 +29,10 @@ export class ButtonComponent implements OnInit {
   static extends(option): { html: string; js: string } {
     const index = ButtonComponent.index++,
       tagName = `${ButtonComponent.tagNamePrefix}-${index}`;
-    const { html, css, className } = option;
-    console.log(index);
-    const { attributes, properties, config } = html,
-      { name, icon, shape, type } = properties;
-    const init = Object.keys(properties)
+    const { html: config, css, className } = option;
+    const init = Object.keys(config)
       .map((key) => {
-        return `this.${key} = ${config[key].type === 'string' ? "'" : ''}${
-          properties[key]
-        }${config[key].type === 'string' ? "'" : ''};`;
+        return `this.${key} = ${transformValue(config[key])}`;
       })
       .join('\n');
     return {
