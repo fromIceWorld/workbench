@@ -1,0 +1,32 @@
+<div id="drawing-board" style="position: relative">
+  <!-- scaleX -->
+  <div id="scaleX" #scaleX style="position: absolute"></div>
+  <!-- scaleY -->
+  <div id="scaleY" #scaleY style="position: absolute"></div>
+  <!-- 页面图 -->
+  <div
+    id="design-view"
+    #design
+    style="width: 1920px; height: 1080px; margin: 22px 0 0 22px"
+    [style]="{ display: tabView == 'design-view' ? 'block' : 'none' }"
+  ></div>
+  <!-- 逻辑图 -->
+  <div
+    id="relation-ship"
+    #relation
+    style="width: 1920px; height: 1080px"
+    [style]="{ display: tabView == 'relation-ship' ? 'block' : 'none' }"
+  ></div>
+</div>
+<!-- 连线弹窗 事件 -->
+<!-- <my-dialog-model-99>
+    <div style="display:flex">
+        <span class="label">source:</span>
+        <my-select-999></my-select-999>
+        <span class="label">target:</span>
+        <my-select-888></my-select-888>
+    </div>
+    <div id="respond">
+    </div>
+    <my-button-99 id="create-btn">确认</my-button-99>
+</my-dialog-model-99> -->

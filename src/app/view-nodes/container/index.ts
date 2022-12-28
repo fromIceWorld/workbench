@@ -1,0 +1,2 @@
+class COMBINATION_CONFIG {}
+export { COMBINATION_CONFIG };

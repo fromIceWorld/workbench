@@ -1,0 +1,39 @@
+<div>
+  <img
+    title="保存数据"
+    src="./menu/save.svg"
+    width="20px"
+    (click)="cacheData($event)"
+  />
+  <img
+    title="恢复数据"
+    src="./menu/recovery.svg"
+    width="20px"
+    (click)="recoverData($event)"
+  />
+  <img
+    title="导出数据"
+    src="./menu/export.svg"
+    width="20px"
+    (click)="exportData($event)"
+  />
+  <img
+    title="切换视图"
+    src="./menu/view.svg"
+    width="20px"
+    (click)="changeView($event)"
+  />
+
+  <div *ngFor="let menu of menuConfigKeys()">
+    <p>{{ menu }}</p>
+    <span *ngFor="let btn of menuConfig[menu]">
+      <img
+        [id]="btn.id"
+        [src]="btn.img"
+        [title]="btn.title"
+        [type]="btn.type"
+        width="20px"
+      />
+    </span>
+  </div>
+</div>

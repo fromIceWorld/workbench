@@ -1,0 +1,80 @@
+<div class="tab-container">
+  <p>数据:</p>
+  <div *ngFor="let key of originKeys(config); index as i">
+    <span class="label">{{ key }}</span>
+    <span *ngIf="config[key].type === 'boolean'">
+      <nz-switch
+        [(ngModel)]="config[key].value"
+        [nzCheckedChildren]="checkedTemplate"
+        [nzUnCheckedChildren]="unCheckedTemplate"
+        (ngModelChange)="updateConfig($event)"
+      ></nz-switch>
+      <ng-template #checkedTemplate><i nz-icon nzType="check"></i></ng-template>
+      <ng-template #unCheckedTemplate
+        ><i nz-icon nzType="close"></i
+      ></ng-template>
+    </span>
+    <span *ngIf="config[key].type === 'array'">
+      <nz-select
+        [(ngModel)]="config[key].value"
+        (ngModelChange)="updateConfig($event)"
+      >
+        <nz-option
+          *ngFor="let item of config[key].options"
+          [nzValue]="item.value ? item.value : item"
+          [nzLabel]="item.label ? item.label : item"
+        ></nz-option>
+      </nz-select>
+    </span>
+    <span *ngIf="config[key].type === 'list'">
+      <nz-tag
+        *ngFor="let tag of config[key].options; let i = index"
+        [nzMode]="'closeable'"
+        (nzOnClose)="handleClose(tag, config[key], 'options')"
+      >
+        {{ sliceTagName(tag) }}
+      </nz-tag>
+      <nz-tag
+        *ngIf="!inputVisible"
+        class="editable-tag"
+        nzNoAnimation
+        (click)="showInput()"
+      >
+        <i nz-icon nzType="plus"></i>
+        New Tag
+      </nz-tag>
+      <input
+        #inputElement
+        nz-input
+        nzSize="small"
+        *ngIf="inputVisible"
+        type="text"
+        [(ngModel)]="inputValue"
+        style="width: 78px"
+        (blur)="handleInputConfirm(config[key], 'options')"
+        (keydown.enter)="handleInputConfirm(config[key], 'options')"
+      />
+    </span>
+    <span *ngIf="config[key].type === 'string'">
+      <nz-input-group [nzSuffix]="inputClearTpl">
+        <input
+          type="text"
+          nz-input
+          [(ngModel)]="config[key].value"
+          (blur)="updateConfig($event)"
+        />
+      </nz-input-group>
+      <ng-template #inputClearTpl
+        ><i
+          nz-icon
+          class="ant-input-clear-icon"
+          nzTheme="fill"
+          nzType="close-circle"
+          *ngIf="config[key].value"
+          (click)="config[key].value = ''"
+        ></i
+      ></ng-template>
+    </span>
+  </div>
+  <p>布局:</p>
+</div>

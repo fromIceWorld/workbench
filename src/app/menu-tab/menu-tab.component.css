@@ -1,0 +1,9 @@
+img {
+  cursor: pointer;
+  margin-right: 8px;
+}
+p {
+  background-color: #fafafa;
+  padding: 5px;
+  margin-bottom: 0;
+}
