@@ -61,11 +61,6 @@ class BUTTON_CONFIG extends NODE_CONFIG {
       type: 'string',
       value: 'search',
     },
-    tags: {
-      type: 'list',
-      options: ['one', 'two'],
-      value: 'one',
-    },
   };
   css = {
     classes: '',

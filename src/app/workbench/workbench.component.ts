@@ -31,4 +31,8 @@ export class WorkbenchComponent implements OnInit {
     let config = e;
     this.view.updateNode(config);
   }
+  changeLayout(e) {
+    console.log(e);
+    this.view.changeNodeLayout(e);
+  }
 }

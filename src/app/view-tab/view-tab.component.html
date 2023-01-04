@@ -7,7 +7,7 @@
   <div
     id="design-view"
     #design
-    style="width: 1920px; height: 1080px; margin: 22px 0 0 22px"
+    style="width: 1920px; height: 1080px"
     [style]="{ display: tabView == 'design-view' ? 'block' : 'none' }"
   ></div>
   <!-- 逻辑图 -->
@@ -19,14 +19,61 @@
   ></div>
 </div>
 <!-- 连线弹窗 事件 -->
-<!-- <my-dialog-model-99>
-    <div style="display:flex">
-        <span class="label">source:</span>
-        <my-select-999></my-select-999>
-        <span class="label">target:</span>
-        <my-select-888></my-select-888>
+<nz-modal
+  [(nzVisible)]="isVisible"
+  nzTitle="创建事件"
+  [nzContent]="modalContent"
+  [nzFooter]="modalFooter"
+  (nzOnCancel)="handleCancel()"
+  #model
+>
+  <ng-template #modalContent>
+    <div>
+      <span>event<->function:</span
+      ><nz-select [(ngModel)]="eventName" style="width: 100px">
+        <nz-option
+          *ngFor="let item of sourceEvents"
+          [nzValue]="item.value"
+          [nzLabel]="item.label"
+        ></nz-option>
+      </nz-select>
+      <nz-select [(ngModel)]="methodName" style="width: 100px">
+        <nz-option
+          *ngFor="let item of targetMethods"
+          [nzValue]="item.value"
+          [nzLabel]="item.label"
+        ></nz-option>
+      </nz-select>
     </div>
-    <div id="respond">
+    <div *ngFor="let back of getBackStatus(); index as i">
+      <span>{{ back.value }}</span>
+      <nz-select [(ngModel)]="methods[i]" style="width: 100px">
+        <nz-option
+          *ngFor="let item of sourceMethods"
+          [nzValue]="item.value"
+          [nzLabel]="item.label"
+        ></nz-option>
+      </nz-select>
     </div>
-    <my-button-99 id="create-btn">确认</my-button-99>
-</my-dialog-model-99> -->
+  </ng-template>
+  <ng-template #modalFooter>
+    <button nz-button nzType="default" (click)="handleCancel()">取消</button>
+    <button
+      nz-button
+      nzType="default"
+      nzDanger
+      *ngIf="!isCreate"
+      (click)="deleteEdge()"
+    >
+      删除
+    </button>
+    <button
+      nz-button
+      nzType="primary"
+      (click)="handleOk()"
+      [nzLoading]="isConfirmLoading"
+    >
+      确定
+    </button>
+  </ng-template>
+</nz-modal>

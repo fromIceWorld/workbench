@@ -16,13 +16,13 @@ export class MenuTabComponent implements OnInit {
         id: 'text',
         type: 'node',
         title: '文本',
-        img: './menu/text.svg',
+        img: '../../assets/img/text.svg',
       },
       {
         id: 'button',
         type: 'node',
         title: '按钮',
-        img: './menu/button.svg',
+        img: '../../assets/img/button.svg',
       },
     ],
     layout: [
@@ -30,7 +30,7 @@ export class MenuTabComponent implements OnInit {
         id: 'container',
         type: 'combo',
         title: '布局容器',
-        img: './menu/input-box.svg',
+        img: '../../assets/img/input-box.svg',
       },
     ],
     form: [
@@ -38,19 +38,19 @@ export class MenuTabComponent implements OnInit {
         id: 'form',
         type: 'combo',
         title: 'form',
-        img: './menu/form.svg',
+        img: '../../assets/img/form.svg',
       },
       {
         id: 'input',
         type: 'node',
         title: '输入框',
-        img: './menu/input.svg',
+        img: '../../assets/img/input.svg',
       },
       {
         id: 'radio',
         type: 'node',
         title: '单选框',
-        img: './menu/radio.svg',
+        img: '../../assets/img/radio.svg',
       },
     ],
 
@@ -59,7 +59,7 @@ export class MenuTabComponent implements OnInit {
         id: 'dialog_model',
         type: 'combo',
         title: 'dialog_model',
-        img: './menu/dialog.svg',
+        img: '../../assets/img/dialog.svg',
       },
     ],
   };

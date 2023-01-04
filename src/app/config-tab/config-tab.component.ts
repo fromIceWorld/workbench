@@ -16,13 +16,14 @@ import {
 export class ConfigTabComponent implements OnInit {
   @Input() config = {};
   @Output() updatePoint = new EventEmitter();
+  @Output() changeLayout = new EventEmitter();
   originKeys(obj) {
     return Object.keys(obj);
   }
   isArray(value) {
     return Array.isArray(value);
   }
-  updateConfig(e) {
+  updateConfig(e?) {
     this.updatePoint.emit(this.config);
   }
   selectChange(e) {
@@ -35,6 +36,7 @@ export class ConfigTabComponent implements OnInit {
 
   handleClose(removedTag: {}, arr, key): void {
     arr[key] = arr[key].filter((tag) => tag !== removedTag);
+    this.updateConfig();
   }
 
   sliceTagName(tag: string): string {
@@ -55,5 +57,11 @@ export class ConfigTabComponent implements OnInit {
     }
     this.inputValue = '';
     this.inputVisible = false;
+    this.updateConfig();
+  }
+  changeFlex(e, id) {
+    this.changeLayout.emit({
+      layout: id,
+    });
   }
 }

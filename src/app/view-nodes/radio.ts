@@ -12,47 +12,45 @@ function renderRadio(group, json, destroy) {
     });
     willDel.forEach((item) => group.removeChild(item));
   }
-  const { attributes, properties } = json,
-    { options } = properties,
+  const { options } = json.options,
     boxWidth = computedWidth(options);
   options.reduce((preWidth, item, index) => {
     group.addShape('text', {
-      id: item.value,
+      id: item,
       attrs: {
         x: 15 + preWidth,
         y: 2,
-        text: item.label,
+        text: item,
         fontSize: 14,
         textAlign: 'left',
         textBaseline: 'middle',
         fill: '#000000d9',
       },
-      name: item.label + '_label' + Math.random(),
+      name: item + '_label' + Math.random(),
     });
     group.addShape('circle', {
       attrs: {
         x: preWidth,
         y: 0,
         r: 4,
-        fill: item.checked ? innerChecedFill : innerNoChecedFill,
+        fill: item === json.options.value ? innerChecedFill : innerNoChecedFill,
       },
       // must be assigned in G6 3.3 and later versions. it can be any value you want
-      name: item.label + '_inner-circle' + Math.random(),
+      name: item + '_inner-circle' + Math.random(),
     });
     group.addShape('circle', {
       attrs: {
         x: preWidth,
         y: 0,
         r: 7,
-        stroke: item.checked ? '#1890ff' : '#d9d9d9',
+        stroke: item === json.options.value ? '#1890ff' : '#d9d9d9',
       },
       // must be assigned in G6 3.3 and later versions. it can be any value you want
-      name: item.label + '_outer-circle' + Math.random(),
+      name: item + '_outer-circle' + Math.random(),
     });
-    return preWidth + 30 + measureText(item.label);
+    return preWidth + 30 + measureText(item);
   }, -35) + 30;
   const box = group.find(function (item) {
-    console.log(item);
     return item.attr('name') === 'radio-border';
   });
   box.attr({
@@ -62,21 +60,21 @@ function renderRadio(group, json, destroy) {
 }
 function computedWidth(optionsString) {
   let width = optionsString.reduce((preWidth, item, index) => {
-    return preWidth + 30 + measureText(item.label);
+    return preWidth + 30 + measureText(item);
   }, 0);
   return width;
 }
 class RADIO_CONFIG extends NODE_CONFIG {
-  className = 'my-radio';
+  className = 'RadioComponent';
   html = {
-    attributes: {
-      formcontrol: 'sex',
+    formcontrol: {
+      type: 'string',
+      value: 'sex',
     },
-    properties: {
-      options: [
-        { label: '男', value: '男', checked: true },
-        { label: '女', value: '女', checked: false },
-      ],
+    options: {
+      type: 'list',
+      options: ['男', '女'],
+      value: '男',
     },
   };
   css = {
@@ -101,9 +99,9 @@ function registerRadio(configModule) {
         },
       },
       draw: function (cfg, group) {
+        console.log(cfg.config.html);
         const self = this,
-          { attributes, properties } = cfg.config.html,
-          { options } = properties;
+          { options } = cfg.config.html.options;
         // 获取配置中的 Combo 内边距
         cfg.padding = [0, 0, 0, 0];
         // 获取样式配置，style.width 与 style.height 对应 rect Combo 位置说明图中的 width 与 height
@@ -127,10 +125,10 @@ function registerRadio(configModule) {
         renderRadio(group, cfg.config.html, false);
       },
       update(cfg, node) {
+        console.log('radio 更新');
         const group = node.get('group');
         renderRadio(group, cfg.config.html, true);
       },
-      afterUpdate(cfg, item) {},
     },
     'rect'
   );

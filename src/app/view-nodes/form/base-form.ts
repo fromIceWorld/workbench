@@ -16,7 +16,6 @@ class FormGroup {
     this.subs.push(fn);
   }
   change(key, value) {
-    console.log(key, value);
     this.subs.forEach((fn) => {
       this[key].value = value;
       let valid = new RegExp(this[key].regexp).test(value);
@@ -25,13 +24,16 @@ class FormGroup {
   }
 }
 class FORM_CONFIG extends COMBINATION_CONFIG {
-  className = 'my-form';
+  className = 'FormComponent';
   html = {
-    attributes: {
-      formgroup: 'fg',
+    formgroup: {
+      type: 'string',
+      value: 'fg',
     },
-    properties: {
-      api: 'https://www.fastmock.site/mock/14c2723aefa052a75b2a6feeed0cf387/suger/records',
+    api: {
+      type: 'string',
+      value:
+        'https://www.fastmock.site/mock/14c2723aefa052a75b2a6feeed0cf387/suger/records',
     },
   };
   css = {

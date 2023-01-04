@@ -1,11 +1,8 @@
 import G6 from '../../../../g6.min.js';
 import { COMBINATION_CONFIG } from '../container/index';
 class CONTAINER_CONFIG extends COMBINATION_CONFIG {
-  className = 'my-container';
-  html = {
-    attributes: {},
-    properties: {},
-  };
+  className = 'ContainerComponent';
+  html = {};
   css = {
     classes: '',
     style: {
@@ -20,7 +17,6 @@ class CONTAINER_CONFIG extends COMBINATION_CONFIG {
 
 function registerContainer(configModule) {
   configModule['CONTAINER_CONFIG'] = CONTAINER_CONFIG;
-
   G6.registerCombo(
     'container',
     {
@@ -60,10 +56,6 @@ function registerContainer(configModule) {
           name: 'combo-keyShape',
         });
         return rect;
-      },
-      // 定义新增的右侧圆的位置更新逻辑
-      afterUpdate: function afterUpdate(cfg, combo) {
-        const group = combo.get('group');
       },
     },
     'rect'

@@ -2,16 +2,33 @@ import G6 from '../../../g6.min.js';
 import { NODE_CONFIG } from './node/base/index.js';
 
 class INPUT_CONFIG extends NODE_CONFIG {
-  className = 'my-input';
+  className = 'InputComponent';
   html = {
-    attributes: {
-      placeholder: '请输入姓名',
-      formcontrol: 'name',
+    placeholder: {
+      type: 'string',
+      value: '请输入姓名',
     },
-    properties: {
+    formcontrol: {
+      type: 'string',
+      value: 'name',
+    },
+    value: {
+      type: 'string',
       value: '',
-      updateOn: 'change',
-      regexp: '^[1-9]{1,10}$',
+    },
+    updateOn: {
+      type: 'string',
+      options: [
+        {
+          label: 'change',
+          value: 'change',
+        },
+      ],
+      value: 'change',
+    },
+    regexp: {
+      type: 'string',
+      value: '^[1-9]{1,10}$',
     },
   };
   css = {
@@ -47,13 +64,12 @@ function registerInput(configModule) {
       },
       afterDraw(cfg, group) {
         const { config } = cfg,
-          { attributes } = config.html,
-          { placeholder } = attributes;
+          { placeholder } = config.html;
         cfg.padding = [0, 0, 0, 0];
         group.addShape('text', {
           id: 'text',
           attrs: {
-            text: placeholder,
+            text: placeholder.value,
             x: -95,
             y: 1,
             fontSize: 14,
@@ -78,19 +94,11 @@ function registerInput(configModule) {
         });
       },
       update(cfg, node) {
-        console.log('input update', cfg);
         const { html } = cfg.config,
-          { attributes, properties } = html,
-          { placeholder } = attributes,
+          { placeholder } = html,
           group = node.getContainer();
         let textShape = group.findById('text');
-        textShape.attr('text', placeholder);
-      },
-      afterUpdate(cfg, item) {
-        // const { config } = cfg,
-        //     group = item.getContainer();
-        // let text = group.findById('text');
-        // text.attr('text', config.placeholder);
+        textShape.attr('text', placeholder.value);
       },
     },
     'rect'

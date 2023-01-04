@@ -1,12 +1,12 @@
 import G6 from '../../../../g6.min.js';
 import { COMBINATION_CONFIG } from '../container/index.js';
 class DIALOG_MODEL_CONFIG extends COMBINATION_CONFIG {
-  className = 'my-dialog-model';
+  className = 'DialogComponent';
   html = {
-    attributes: {
-      title: '对话框',
+    title: {
+      type: 'string',
+      value: '对话框',
     },
-    properties: {},
   };
   css = {
     classes: '',
@@ -30,7 +30,6 @@ class DIALOG_MODEL_CONFIG extends COMBINATION_CONFIG {
 
 function registerDialog(configModule) {
   configModule['DIALOG_MODEL_CONFIG'] = DIALOG_MODEL_CONFIG;
-
   G6.registerCombo(
     'dialog_model',
     {
@@ -72,10 +71,6 @@ function registerDialog(configModule) {
           name: 'combo-keyShape',
         });
         return rect;
-      },
-      // 定义新增的右侧圆的位置更新逻辑
-      afterUpdate: function afterUpdate(cfg, combo) {
-        const group = combo.get('group');
       },
     },
     'rect'

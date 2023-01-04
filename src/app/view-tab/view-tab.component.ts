@@ -1,10 +1,12 @@
 import {
+  ChangeDetectorRef,
   Component,
   EventEmitter,
   OnInit,
   Output,
   ViewChild,
 } from '@angular/core';
+import { NzModalService } from 'ng-zorro-antd/modal';
 import G6 from '../../../g6.min.js';
 import {
   configModule,
@@ -22,9 +24,12 @@ import {
   selector: 'app-view-tab',
   templateUrl: './view-tab.component.html',
   styleUrls: ['./view-tab.component.css'],
+  providers: [],
 })
 export class ViewTabComponent implements OnInit {
   @Output() focusPoint = new EventEmitter();
+  @ViewChild('model')
+  model;
   @ViewChild('respond')
   respond;
   @ViewChild('design')
@@ -37,6 +42,10 @@ export class ViewTabComponent implements OnInit {
   scaleY;
   @ViewChild('dialog')
   dialog;
+  isVisible: boolean = false;
+  eventName: string = '';
+  methodName: string = '';
+  methods: string[] = [];
   level2 = [];
   eventLine = [[]];
   tabView: string = 'design-view';
@@ -60,15 +69,19 @@ export class ViewTabComponent implements OnInit {
   config = [];
   sourceList = [];
   targetList = [];
-  sourceOutput = [];
+  sourceEvents = [];
   sourceMethods = [];
-  targetOutput = [];
+  targetMethods = [];
+  isCreate: boolean = false;
   newEdge;
   sourceSelect;
   targetSelect;
   diaDisplay: boolean = false;
   idMapTag: Map<string, string> = new Map();
-  constructor() {}
+  constructor(
+    private cd: ChangeDetectorRef,
+    private modalService: NzModalService
+  ) {}
   registerNodes() {
     registerButton(configModule);
     registerContainer(configModule);
@@ -102,63 +115,6 @@ export class ViewTabComponent implements OnInit {
     scaleXgraph.read(this.scaleXdata);
     scaleYgraph.read(this.scaleYdata);
   }
-  // levelChange(e, index) {
-  //   const { value, source } = e.detail;
-  //   let target = source.options.filter((item) => item.label === value)[0];
-  //   this.eventLine[0][index] = value;
-  //   if (index == '0') {
-  //     return;
-  //   }
-  //   // 切换 respond 选项
-  //   this.level2 = target.children || [];
-  //   if (this.level2.length) {
-  //     let tmplate: string[] = [],
-  //       tagNames: string[] = [],
-  //       js = (target.children || [])
-  //         .map((item, index) => {
-  //           const { html, js, tagName } = bundle['MySelect'].extends({
-  //             html: {
-  //               attributes: {
-  //                 options: JSON.stringify(this.sourceMethods),
-  //               },
-  //               properties: {},
-  //             },
-  //             css: {
-  //               classes: '',
-  //               style: {},
-  //             },
-  //           });
-  //           this.eventLine.push([this.level2[index].label]);
-  //           tagNames.push(tagName);
-  //           tmplate.push(`<span>${this.level2[index].label}: </span>${html}`);
-  //           return js;
-  //         })
-  //         .join('');
-  //     let div = document.createElement('div'),
-  //       script = document.createElement('script');
-  //     div.innerHTML = tmplate.join('');
-  //     script.innerHTML = `with(bundle){
-  //         ${js}
-  //     }`;
-  //     this.respond.append(script, div);
-  //     tagNames.forEach((tagName, index) => {
-  //       let dom = this.respond.querySelector(tagName);
-  //       dom.addEventListener('change', (e) => {
-  //         const { value } = e.detail;
-  //         this.eventLine[index + 1][1] = value;
-  //         console.log(this.eventLine);
-  //       });
-  //     });
-  //   } else {
-  //     if (!this.respond.children.length) {
-  //       return;
-  //     }
-  //     this.respond.children[1].remove();
-  //     this.respond.children[0].remove();
-  //     this.eventLine = [this.eventLine[0]];
-  //   }
-  //   console.log(this.eventLine);
-  // }
   changeView(e) {
     if (this.tabView === 'design-view') {
       this.tabView = 'relation-ship';
@@ -166,10 +122,7 @@ export class ViewTabComponent implements OnInit {
       this.tabView = 'design-view';
     }
   }
-  cancel(e) {
-    this.relationshipGraph.removeItem(this.newEdge);
-    this.newEdge = null;
-  }
+
   cacheData() {
     let cache = {
       view: {
@@ -253,7 +206,6 @@ export class ViewTabComponent implements OnInit {
         label,
       };
     });
-    console.log(this.idMapTag);
     edges
       .map((edge) => {
         const { source, target, label } = edge,
@@ -272,13 +224,13 @@ export class ViewTabComponent implements OnInit {
                       )}');
                   if(index === 0){
                       sourceDOM.addEventListener(event, (e)=>{
-                          targetDOM[fn]();
+                          targetDOM._ngElementStrategy.componentRef.instance[fn]();
                       })
                   }else{
                       sourceDOM.addEventListener(${JSON.stringify(
                         eventsArray[0][0]
                       )} + event, (e)=>{
-                          targetDOM[fn]();
+                          targetDOM._ngElementStrategy.componentRef.instance[fn]();
                       })
                   }
               });
@@ -290,7 +242,7 @@ export class ViewTabComponent implements OnInit {
       script = document.createElement('script');
     dom.innerHTML = html;
     script.innerHTML = `${js}`;
-    document.body.append(script);
+    document.body.append(script, dom);
   }
   exportCombo(combo) {
     let htmlString = '',
@@ -298,11 +250,19 @@ export class ViewTabComponent implements OnInit {
       { html, css, component, className } = combo._cfg.model.config,
       { nodes, combos } = combo.getChildren();
     // 建立 node id与tagName的映射
-    const originClass = customElements.get(className),
+    const originClass = window[className],
       index = (originClass as any).index;
-    this.idMapTag.set(combo._cfg.id, className + '-' + index);
+    this.idMapTag.set(
+      combo._cfg.id,
+      (originClass as any).tagNamePrefix + '-' + index
+    );
     //  导出当前combo数据
-    let { html: s, js } = (originClass as any).extends({ html, css });
+    let { html: s, js } = (originClass as any).extends({
+      html,
+      css,
+      className,
+    });
+    console.log(s, js);
     const [origin, start, end] = s.match(
       /^(\<[a-z-0-9 ="';:]+\>[\s\S]*)(\<\/([a-z-0-9]+)\>)$/
     );
@@ -327,11 +287,15 @@ export class ViewTabComponent implements OnInit {
   }
   // 导出节点数据
   exportNode(node) {
+    console.log('node', node);
     let { html, css, className } = node._cfg.model.config;
     const originClass = window[className],
       index = (originClass as any).index;
     console.log(node._cfg.model.config, originClass);
-    this.idMapTag.set(node._cfg.id, className + '-' + index);
+    this.idMapTag.set(
+      node._cfg.id,
+      (originClass as any).tagNamePrefix + '-' + index
+    );
     return (originClass as any).extends({ html, css, className });
   }
   onEdit(e) {
@@ -342,8 +306,7 @@ export class ViewTabComponent implements OnInit {
   }
   changeNodeLayout(e) {
     // bboxCanvasCache储存的是旧的数据，更新后节点的中心点在model中，而且center不变
-    let { detail } = e,
-      { value } = detail;
+    let value = e;
     if (this.focusCombo) {
       const { nodes, combos } = this.focusCombo.getChildren(),
         { minX, minY } = this.focusCombo._cfg.bbox,
@@ -559,28 +522,20 @@ export class ViewTabComponent implements OnInit {
     }
     this.graph.setItemState(item, 'focus', false);
   }
-  createEdge(e) {
-    this.newEdge.update({
-      ...this.newEdge._cfg.model,
-      label: `${this.eventLine.map((item) => item.join('->')).join('\n')}`,
-    });
-    this.diaDisplay = false;
-  }
   relationshipGraphAddEvent() {
     const graph = this.relationshipGraph;
     // 创建边之前
     graph.on('aftercreateedge', (e) => {
       const newEdge = e.edge,
         { sourceNode, targetNode } = newEdge._cfg,
-        { event: sourceOutput, methods: sourceMethods } =
+        { event: sourceEvents, methods: sourceMethods } =
           sourceNode._cfg.model.config.component,
-        { methods: targetOutput } = targetNode._cfg.model.config.component,
+        { methods: targetMethods } = targetNode._cfg.model.config.component,
         edges = graph.save().edges;
-      this.sourceOutput = sourceOutput;
+      // 事件列表
+      this.sourceEvents = sourceEvents;
       this.sourceMethods = sourceMethods;
-      this.targetOutput = targetOutput;
-      // this.source1.changeOptions(sourceOutput);
-      // this.target1.changeOptions(targetOutput);
+      this.targetMethods = targetMethods;
       G6.Util.processParallelEdges(edges, 50);
       graph.getEdges().forEach((edge, i) => {
         graph.updateItem(edge, {
@@ -588,26 +543,27 @@ export class ViewTabComponent implements OnInit {
           curvePosition: edges[i].curvePosition,
         });
       });
+      this.isCreate = true;
       this.newEdge = newEdge;
-      this.dialog.visibleChange();
-
-      // this.cd.detectChanges();
+      this.isVisible = true;
     });
     graph.on('edge:click', (evt) => {
       const { source, target, label } = evt.item._cfg.model;
       const sourceNode = graph.findById(source),
         targetNode = graph.findById(target);
-      const { event: sourceOutput } = sourceNode._cfg.model.config.component,
-        { methods: targetOutput } = targetNode._cfg.model.config.component;
-      this.sourceList = sourceOutput;
-      this.targetList = targetOutput;
-      this.dialog.visibleChange();
+      const { event: sourceEvents } = sourceNode._cfg.model.config.component,
+        { methods: targetMethods } = targetNode._cfg.model.config.component;
+      this.sourceList = sourceEvents;
+      this.targetList = targetMethods;
+      this.isCreate = false;
+      this.isVisible = true;
     });
   }
   graphAddEventListener() {
     const graph = this.graph;
     window['graph'] = graph;
     graph.on('click', (evt) => {
+      this.isCreate = false;
       this.config = [{}, {}];
       const { item } = evt;
       if (item !== this.focusNode) {
@@ -757,6 +713,44 @@ export class ViewTabComponent implements OnInit {
         }
       },
       false
+    );
+  }
+  handleCancel() {
+    if (this.isCreate) {
+      this.deleteEdge();
+    }
+    // this.modalService.openModals[0]._finishDialogClose();
+  }
+  deleteEdge() {
+    this.removeEdge();
+    this.isVisible = false;
+  }
+  removeEdge() {
+    this.relationshipGraph.removeItem(this.newEdge);
+    this.newEdge = null;
+  }
+  handleOk() {
+    console.log('ok', this.model);
+    let labels = [[this.eventName, this.methodName]],
+      backs = this.getBackStatus();
+    for (let i = 0; i < backs.length; i++) {
+      labels.push([backs[i].value, this.methods[i]]);
+    }
+    this.newEdge.update({
+      ...this.newEdge._cfg.model,
+      label: `${labels.map((item) => item.join('->')).join('\n')}`,
+    });
+    this.isVisible = false;
+
+    // this.modalService.openModals[0]._finishDialogClose(); // ng-modal 编译后数据非双向绑定
+  }
+  getBackStatus() {
+    return (
+      (
+        this.targetMethods.filter(
+          (item) => item.value === this.methodName
+        )[0] || []
+      ).children || []
     );
   }
 }
