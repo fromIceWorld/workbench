@@ -29,7 +29,8 @@
     <span *ngIf="config[key].type === 'list'">
       <nz-tag
         *ngFor="let tag of config[key].options; let i = index"
-        [nzMode]="'closeable'"
+        [nzMode]="config[key].value === tag ? 'default' : 'closeable'"
+        (click)="checkTag(tag, config[key])"
         (nzOnClose)="handleClose(tag, config[key], 'options')"
       >
         {{ sliceTagName(tag) }}

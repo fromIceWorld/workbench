@@ -16,7 +16,11 @@ class TEXT_CONFIG extends NODE_CONFIG {
   };
   component = {
     event: [],
-    methods: [],
+    methods: [
+      { label: 'showChange', value: 'showChange' },
+      { label: 'show', value: 'show' },
+      { label: 'hide', value: 'hide' },
+    ],
   };
 }
 function registerText(configModule) {

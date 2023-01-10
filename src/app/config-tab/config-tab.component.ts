@@ -29,6 +29,10 @@ export class ConfigTabComponent implements OnInit {
   selectChange(e) {
     this.updatePoint.emit(this.config);
   }
+  checkTag(tag, origin) {
+    origin.value = tag;
+    this.updatePoint.emit(this.config);
+  }
   ngOnInit(): void {}
   inputVisible = false;
   inputValue = '';

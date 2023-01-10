@@ -12,7 +12,7 @@ function renderRadio(group, json, destroy) {
     });
     willDel.forEach((item) => group.removeChild(item));
   }
-  const { options } = json.options,
+  const { options, value } = json.options,
     boxWidth = computedWidth(options);
   options.reduce((preWidth, item, index) => {
     group.addShape('text', {
@@ -33,7 +33,7 @@ function renderRadio(group, json, destroy) {
         x: preWidth,
         y: 0,
         r: 4,
-        fill: item === json.options.value ? innerChecedFill : innerNoChecedFill,
+        fill: item === value ? innerChecedFill : innerNoChecedFill,
       },
       // must be assigned in G6 3.3 and later versions. it can be any value you want
       name: item + '_inner-circle' + Math.random(),
@@ -43,7 +43,7 @@ function renderRadio(group, json, destroy) {
         x: preWidth,
         y: 0,
         r: 7,
-        stroke: item === json.options.value ? '#1890ff' : '#d9d9d9',
+        stroke: item === value ? '#1890ff' : '#d9d9d9',
       },
       // must be assigned in G6 3.3 and later versions. it can be any value you want
       name: item + '_outer-circle' + Math.random(),

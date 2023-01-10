@@ -28,7 +28,7 @@ class INPUT_CONFIG extends NODE_CONFIG {
     },
     regexp: {
       type: 'string',
-      value: '^[1-9]{1,10}$',
+      value: '/^[1-9]{1,10}$/',
     },
   };
   css = {
@@ -37,9 +37,11 @@ class INPUT_CONFIG extends NODE_CONFIG {
   };
   component = {
     event: [
-      { label: 'validate', value: 'validate' },
+      { label: 'validateTrue', value: 'validateTrue' },
+      { label: 'validateFalse', value: 'validateFalse' },
       { label: 'change', value: 'change' },
       { label: 'clear', value: 'clear' },
+      { label: 'focus', value: 'focus' },
       { label: 'blur', value: 'blur' },
     ],
     methods: [
@@ -75,7 +77,8 @@ function registerInput(configModule) {
             fontSize: 14,
             textAlign: 'left',
             textBaseline: 'middle',
-            fill: '#000000d9',
+            fill: '#000',
+            opacity: 0.85,
           },
           // must be assigned in G6 3.3 and later versions. it can be any value you want
           name: 'text-shape',
