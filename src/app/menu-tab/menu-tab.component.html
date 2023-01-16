@@ -1,39 +1,74 @@
 <div>
-  <img
+  <i
     title="保存数据"
-    src="../../assets/img/save.svg"
+    nz-icon
+    nzType="cloud-upload"
+    nzTheme="outline"
     width="20px"
+    class="btn"
+    style="color: #0093ff"
     (click)="cacheData($event)"
-  />
-  <img
+  ></i>
+  <i
     title="恢复数据"
-    src="../../assets/img/recovery.svg"
+    nz-icon
+    nzType="cloud-download"
+    nzTheme="outline"
+    style="color: #3ab428"
     width="20px"
+    class="btn"
     (click)="recoverData($event)"
-  />
-  <img
+  ></i>
+
+  <i
     title="导出数据"
-    src="../../assets/img/export.svg"
+    nz-icon
+    nzType="download"
+    nzTheme="outline"
     width="20px"
+    style="color: #c243b0"
+    class="btn"
     (click)="exportData($event)"
-  />
-  <img
-    title="切换视图"
-    src="../../assets/img/view.svg"
-    width="20px"
-    (click)="changeView($event)"
-  />
+  ></i>
+  <span style="float: right; margin-right: 14px">
+    <i
+      title="切换视图"
+      nz-icon
+      nzType="eye"
+      nzTheme="outline"
+      width="20px"
+      class="btn"
+      style="color: #dc6c6c"
+      *ngIf="viewType == ViewTypes.view"
+      (click)="changeView($event)"
+    ></i>
+    <i
+      *ngIf="viewType == ViewTypes.link"
+      title="切换视图"
+      nz-icon
+      nzType="api"
+      style="color: #b7b741"
+      nzTheme="outline"
+      width="20px"
+      class="btn"
+      (click)="changeView($event)"
+    ></i>
+  </span>
 
   <div *ngFor="let menu of menuConfigKeys()">
     <p>{{ menu }}</p>
     <span *ngFor="let btn of menuConfig[menu]">
-      <img
-        [id]="btn.id"
-        [src]="btn.img"
+      <i
+        draggable="true"
         [title]="btn.title"
-        [type]="btn.type"
+        [id]="btn.id"
+        nz-icon
+        [type]="btn.icon"
+        [comonentType]="btn.type"
+        nzTheme="outline"
         width="20px"
-      />
+        class="btn menu-node"
+      ></i>
     </span>
   </div>
 </div>

@@ -7,3 +7,12 @@ p {
   padding: 5px;
   margin-bottom: 0;
 }
+
+.btn {
+  cursor: pointer;
+  margin: 8px 5px;
+  font-size: 20px;
+}
+.menu-node {
+  font-size: 18px;
+}

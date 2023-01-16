@@ -196,7 +196,6 @@ export class ViewTabComponent implements OnInit {
         },
         ['', '']
       );
-    console.log([html, js]);
     // 连线数据
     const edges = this.relationshipGraph.getEdges().map((edge) => {
       const { source, target, label } = edge._cfg.model;
@@ -212,32 +211,66 @@ export class ViewTabComponent implements OnInit {
           eventsArray = label
             .split('\n')
             .map((eventToFn: string) => eventToFn.split('->'));
+        console.log(eventsArray);
         const eventJs = `
-              //初始化事件
-              ${JSON.stringify(eventsArray)}.forEach((fnTofn, index)=>{
-                  const [event,fn] = fnTofn;
-                  const sourceDOM = document.querySelector('${this.idMapTag.get(
-                    source
-                  )}'),
-                      targetDOM = document.querySelector('${this.idMapTag.get(
-                        target
-                      )}');
-                  if(index === 0){
-                      sourceDOM.addEventListener(event, (e)=>{
-                          targetDOM._ngElementStrategy.componentRef.instance[fn]();
-                      })
-                  }else{
-                      sourceDOM.addEventListener(${JSON.stringify(
-                        eventsArray[0][0]
-                      )} + event, (e)=>{
-                          targetDOM._ngElementStrategy.componentRef.instance[fn]();
-                      })
-                  }
-              });
-          `;
+                  //初始化事件
+                  ${JSON.stringify(eventsArray)}.forEach((fnTofn, index)=>{
+                      const [event,fn] = fnTofn;
+                      const sourceDOM = document.querySelector('${this.idMapTag.get(
+                        source
+                      )}'),
+                          targetDOM = document.querySelector('${this.idMapTag.get(
+                            target
+                          )}');
+                      if(index === 0){
+                          sourceDOM.addEventListener(event, (e)=>{
+                              targetDOM._ngElementStrategy.componentRef.instance[fn]();
+                          })
+                      }else{
+                          targetDOM.addEventListener(event, (e)=>{
+                              sourceDOM._ngElementStrategy.componentRef.instance[fn]();
+                          })
+                      }
+                  });
+              `;
         js += eventJs;
       })
       .join();
+    console.log([html, js]);
+    // 下载 html文件
+    let string = `
+    <!DOCTYPE html>
+    <html lang="en">
+        <head>
+            <meta charset="utf-8" />
+            <title>展示区</title>
+            <base href="./" />
+            <meta name="viewport" content="width=device-width, initial-scale=1" />
+            <link rel="icon" type="image/x-icon" href="favicon.ico" />
+            <script src="https://fromiceworld.github.io/web-component-zorro-Angular/runtime.js"></script>
+            <script src="https://fromiceworld.github.io/web-component-zorro-Angular/polyfills.js"></script>
+            <script src="https://fromiceworld.github.io/web-component-zorro-Angular/main.js"></script>
+            <link rel="stylesheet" href="https://fromiceworld.github.io/web-component-zorro-Angular/styles.css"/>
+        </head>
+        <body>
+          ${html}
+        </body>
+        <script>
+          ${js}
+        </script>
+    </html>
+    `;
+    const blob = new Blob([string], { type: 'text/html' });
+    const a = document.createElement('a'),
+      href = URL.createObjectURL(blob);
+    a.href = href;
+    let hash = new Date();
+    a.download = 'test.html';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(href);
+
     let dom = document.createElement('div'),
       script = document.createElement('script');
     dom.innerHTML = html;
@@ -648,7 +681,6 @@ export class ViewTabComponent implements OnInit {
   }
   addGlobalEvent() {
     const that = this;
-    document.addEventListener('keydown', (event) => {});
     document.addEventListener(
       'dragstart',
       function (event) {
@@ -674,7 +706,7 @@ export class ViewTabComponent implements OnInit {
             { id } = that.dragTarget as HTMLElement,
             targetX = offsetX,
             targetY = offsetY,
-            targetType = (that.dragTarget as any).type;
+            targetType = (that.dragTarget as any).comonentType;
           // 阻止默认动作（如打开一些元素的链接）
           event.preventDefault();
           // 将拖动的元素到所选择的放置目标节点中

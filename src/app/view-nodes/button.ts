@@ -69,9 +69,9 @@ class BUTTON_CONFIG extends NODE_CONFIG {
   component = {
     event: [{ label: 'click', value: 'click' }],
     methods: [
-      { label: 'loading', value: 'loading' },
+      { label: 'setLoading', value: 'setLoading' },
       { label: 'normal', value: 'normal' },
-      { label: 'disabled', value: 'disabled' },
+      { label: 'setDisabled', value: 'setDisabled' },
     ],
   };
 }

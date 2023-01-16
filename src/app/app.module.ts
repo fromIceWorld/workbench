@@ -16,7 +16,9 @@ import { MenuTabComponent } from './menu-tab/menu-tab.component';
 import { ViewTabComponent } from './view-tab/view-tab.component';
 import { WorkbenchComponent } from './workbench/workbench.component';
 // 暴露出源组件class 创建web component的API
-
+export * from '../../../custom-elements-demo/dist/custom-elements-demo/main.js';
+export * from '../../../custom-elements-demo/dist/custom-elements-demo/polyfills.js';
+export * from '../../../custom-elements-demo/dist/custom-elements-demo/runtime.js';
 @NgModule({
   declarations: [
     WorkbenchComponent,

@@ -46,7 +46,7 @@
       </nz-select>
     </div>
     <div *ngFor="let back of getBackStatus(); index as i">
-      <span>{{ back.value }}</span>
+      <span>{{ back.label }}</span>
       <nz-select [(ngModel)]="methods[i]" style="width: 100px">
         <nz-option
           *ngFor="let item of sourceMethods"

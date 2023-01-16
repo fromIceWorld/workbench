@@ -32,8 +32,7 @@ class FORM_CONFIG extends COMBINATION_CONFIG {
     },
     api: {
       type: 'string',
-      value:
-        'https://www.fastmock.site/mock/14c2723aefa052a75b2a6feeed0cf387/suger/records',
+      value: '/suger/records',
     },
   };
   css = {
@@ -73,8 +72,8 @@ class FORM_CONFIG extends COMBINATION_CONFIG {
         label: 'submit',
         value: 'submit',
         children: [
-          { label: '200', value: '200' },
-          { label: '500', value: '500' },
+          { label: '200', value: 'when200' },
+          { label: '500', value: 'when500' },
         ],
       },
       {
@@ -88,7 +87,6 @@ class FORM_CONFIG extends COMBINATION_CONFIG {
 
 function registrForm(configModule) {
   configModule['FORM_CONFIG'] = FORM_CONFIG;
-
   G6.registerCombo(
     'form',
     {
