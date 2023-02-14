@@ -11,12 +11,14 @@ import G6 from '../../../g6.min.js';
 import {
   configModule,
   registerButton,
+  registerCommon,
   registerContainer,
   registerDialog,
   registerInput,
   registerRadio,
   registerScaleX,
   registerScaleY,
+  registerTable,
   registerText,
   registrForm,
 } from '../view-nodes/index';
@@ -60,7 +62,7 @@ export class ViewTabComponent implements OnInit {
   scaleYdata = {
     nodes: [{ id: '2', type: 'scaleY', x: 0, y: 0 }],
   };
-  eventNodes = [];
+  // eventNodes = [];
   graph: any;
   relationshipGraph: any;
   focusNode: any = null;
@@ -84,6 +86,7 @@ export class ViewTabComponent implements OnInit {
   ) {}
   registerNodes() {
     registerButton(configModule);
+    registerTable(configModule);
     registerContainer(configModule);
     registerDialog(configModule);
     registerInput(configModule);
@@ -92,6 +95,7 @@ export class ViewTabComponent implements OnInit {
     registerScaleY();
     registerText(configModule);
     registrForm(configModule);
+    registerCommon(configModule);
   }
   renderScale() {
     const width = 1920,
@@ -211,7 +215,6 @@ export class ViewTabComponent implements OnInit {
           eventsArray = label
             .split('\n')
             .map((eventToFn: string) => eventToFn.split('->'));
-        console.log(eventsArray);
         const eventJs = `
                   //初始化事件
                   ${JSON.stringify(eventsArray)}.forEach((fnTofn, index)=>{
@@ -236,7 +239,6 @@ export class ViewTabComponent implements OnInit {
         js += eventJs;
       })
       .join();
-    console.log([html, js]);
     // 下载 html文件
     let string = `
     <!DOCTYPE html>
@@ -295,7 +297,6 @@ export class ViewTabComponent implements OnInit {
       css,
       className,
     });
-    console.log(s, js);
     const [origin, start, end] = s.match(
       /^(\<[a-z-0-9 ="';:]+\>[\s\S]*)(\<\/([a-z-0-9]+)\>)$/
     );
@@ -320,11 +321,9 @@ export class ViewTabComponent implements OnInit {
   }
   // 导出节点数据
   exportNode(node) {
-    console.log('node', node);
     let { html, css, className } = node._cfg.model.config;
     const originClass = window[className],
       index = (originClass as any).index;
-    console.log(node._cfg.model.config, originClass);
     this.idMapTag.set(
       node._cfg.id,
       (originClass as any).tagNamePrefix + '-' + index
@@ -334,7 +333,6 @@ export class ViewTabComponent implements OnInit {
   onEdit(e) {
     let { detail } = e,
       { dom, value } = detail;
-    console.log('编辑状态', value);
     this.jsonOnEdit = value;
   }
   changeNodeLayout(e) {
@@ -347,7 +345,6 @@ export class ViewTabComponent implements OnInit {
       if (value.layout == 'row') {
         // 修改combo layout json
         this.focusCombo._cfg.model.config.css.style['flex-direction'] = 'row';
-        console.log(this.focusCombo._cfg.model);
         elements.reduce((pre, element) => {
           const { bboxCanvasCache, model, type } = element._cfg,
             { x } = model,
@@ -428,24 +425,34 @@ export class ViewTabComponent implements OnInit {
     });
   }
   updateNode(newConfig) {
-    let target = this.focusCombo ? 'focusCombo' : 'focusNode';
-    const model = this[target]._cfg.model,
-      config = model.config;
-    console.log(model.config.html, newConfig);
+    const model = this.focusNode._cfg.model,
+      config = model.config,
+      { className } = config;
     Object.assign(model.config.html, newConfig);
-    console.log(config, this.focusNode);
+    // 更新 web component
+    const { js, html } = (window[className] as any).extends(config);
+    const tagName = html.match(/\<\/([0-9\-a-z]*)\>$/)[1];
+    // 更新图
+    let relationTarget = this.relationshipGraph.findById(model.id);
+    const model2 = {
+      ...model,
+      id: model.id,
+      tagName,
+    };
+    this.graph.removeItem(this.focusNode);
     // 节点需要更新 view
     if (this.focusNode) {
-      // 更新图
-      let relationTarget = this.relationshipGraph.findById(model.id);
-      if (this.focusNode) {
-        this.graph.updateItem(this.focusNode, {
-          ...this.focusNode._cfg.model,
-          config,
-        });
-        // 节点更新数据后，config变成一个普通的对象，丢失了class 的 原型链
-        this.graph.findById(model.id)._cfg.model.config = config;
-      }
+      this.createElement(JSON.parse(JSON.stringify(model2)), tagName, js);
+      // let div = document.createElement(tagName),
+      //   css = document.createElement('style'),
+      //   script = document.createElement('script');
+      // script.innerHTML = js;
+      // css.innerHTML = `${tagName}{display:inline-block}`;
+      // document.querySelector('app-cache').append(div, css, script);
+      // this.graph.updateItem(this.focusNode, model2);
+
+      // 节点更新数据后，config变成一个普通的对象，丢失了class 的 原型链
+      // this.graph.findById(model.id)._cfg.model.config = config;
       if (relationTarget) {
         this.relationshipGraph.updateItem(relationTarget, {
           ...relationTarget._cfg.model,
@@ -453,7 +460,6 @@ export class ViewTabComponent implements OnInit {
         });
         this.relationshipGraph.findById(model.id)._cfg.model.config = config;
       }
-      this.graph.updateCombos();
     }
   }
   ngOnInit() {
@@ -477,6 +483,9 @@ export class ViewTabComponent implements OnInit {
         defaultNode: {
           type: 'rect',
           size: [80, 30],
+        },
+        defaultCombo: {
+          type: 'cRect',
         },
         modes: {
           default: ['drag-node', { type: 'create-edge', key: 'shift' }],
@@ -540,6 +549,7 @@ export class ViewTabComponent implements OnInit {
           // ... 其他配置
         },
         plugins: [snapLine],
+        renderer: 'canvas',
       });
     this.graph = graph;
     graph.read(this.data);
@@ -547,6 +557,9 @@ export class ViewTabComponent implements OnInit {
   }
 
   focus(item) {
+    if (!item) {
+      return;
+    }
     this.graph.setItemState(item, 'focus', true);
   }
   unFocus(item) {
@@ -620,10 +633,12 @@ export class ViewTabComponent implements OnInit {
     });
     graph.on('combo:click', (evt) => {
       let { nodes, combos } = evt.item.getChildren();
-      this.eventNodes = [];
-      [].concat(nodes, combos).map((item) => {
-        this.eventNodes.push({ ...item._cfg.model });
-      });
+      // this.eventNodes = [];
+      // [].concat(nodes, combos).map((item) => {
+      //   if (item._cfg) {
+      //     this.eventNodes.push({ ...item._cfg.model });
+      //   }
+      // });
       // 展示combo  json 数据
       const { item } = evt,
         { html: config } = item._cfg.model.config;
@@ -714,38 +729,50 @@ export class ViewTabComponent implements OnInit {
           const nodeSetting = new configModule[
               id.toLocaleUpperCase() + '_CONFIG'
             ](),
-            { className, html, css, component } = nodeSetting;
+            { className } = nodeSetting;
+          const { js, html } = (window[className] as any).extends(nodeSetting);
+          let tagName = html.match(/\<\/([0-9\-a-z]*)\>$/)[1];
           let config = {
             x: targetX,
             y: targetY,
             id: String(Math.random()),
-            type: id,
             config: nodeSetting,
           };
-          console.log(nodeSetting, targetType, event.target);
-
-          if (targetType === 'combo') {
-            Object.assign(config, {
-              label: id,
-            });
-            that.graph.createCombo({ ...config }, []);
-          } else if (targetType === 'node') {
-            that.graph.addItem('node', {
-              ...config,
-            });
-          }
-          if (
-            component &&
-            (component.event.length || component.methods.length)
-          ) {
+          if (targetType === 'node') {
+            that.createElement(
+              {
+                tagName: tagName,
+                ...config,
+                type: 'common',
+              },
+              tagName,
+              js
+            );
             that.relationshipGraph.addItem('node', {
               ...config,
+              type: id,
             });
+          } else if (targetType === 'combo') {
+            Object.assign(config, {
+              label: id,
+              type: id,
+            });
+            that.graph.createCombo({ ...config }, []);
           }
         }
       },
       false
     );
+  }
+  createElement(mode: any, tagName, js) {
+    let div = document.createElement(tagName),
+      css = document.createElement('style'),
+      script = document.createElement('script');
+    script.innerHTML = js;
+    css.innerHTML = `${tagName}{display:inline-block}`;
+    document.querySelector('app-cache').append(div, css, script);
+    this.focusNode = this.graph.addItem('node', mode);
+    this.focus(this.focusNode);
   }
   handleCancel() {
     if (this.isCreate) {
@@ -762,7 +789,6 @@ export class ViewTabComponent implements OnInit {
     this.newEdge = null;
   }
   handleOk() {
-    console.log('ok', this.model);
     let labels = [[this.eventName, this.methodName]],
       backs = this.getBackStatus();
     for (let i = 0; i < backs.length; i++) {

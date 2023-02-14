@@ -89,7 +89,6 @@ class RADIO_CONFIG extends NODE_CONFIG {
 
 function registerRadio(configModule) {
   configModule['RADIO_CONFIG'] = RADIO_CONFIG;
-
   G6.registerNode(
     'radio',
     {
@@ -99,7 +98,6 @@ function registerRadio(configModule) {
         },
       },
       draw: function (cfg, group) {
-        console.log(cfg.config.html);
         const self = this,
           { options } = cfg.config.html.options;
         // 获取配置中的 Combo 内边距
@@ -125,7 +123,6 @@ function registerRadio(configModule) {
         renderRadio(group, cfg.config.html, false);
       },
       update(cfg, node) {
-        console.log('radio 更新');
         const group = node.get('group');
         renderRadio(group, cfg.config.html, true);
       },

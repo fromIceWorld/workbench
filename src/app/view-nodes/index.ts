@@ -1,4 +1,5 @@
 export * from './button';
+export * from './common';
 export * from './container/index';
 export * from './dialog/index';
 export * from './form/base-form';
@@ -8,4 +9,5 @@ export * from './node/base';
 export * from './radio';
 export * from './scaleX';
 export * from './scaleY';
+export * from './table/table';
 export * from './text';

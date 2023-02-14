@@ -23,7 +23,6 @@ export class WorkbenchComponent implements OnInit {
     this.view.changeView();
   }
   setConfig(e) {
-    console.log(e);
     this.config.config = e;
   }
   ngOnInit(): void {}
@@ -32,7 +31,6 @@ export class WorkbenchComponent implements OnInit {
     this.view.updateNode(config);
   }
   changeLayout(e) {
-    console.log(e);
     this.view.changeNodeLayout(e);
   }
 }

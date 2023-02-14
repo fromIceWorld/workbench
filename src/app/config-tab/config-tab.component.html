@@ -76,6 +76,14 @@
         ></i
       ></ng-template>
     </span>
+    <span *ngIf="config[key].type === 'number'">
+      <nz-input-number
+        [(ngModel)]="config[key].value"
+        [nzMin]="1"
+        [nzStep]="1"
+        (nzBlur)="updateConfig($event)"
+      ></nz-input-number>
+    </span>
   </div>
   <p>布局:</p>
   <div>

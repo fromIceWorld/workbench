@@ -129,10 +129,6 @@ function registrForm(configModule) {
         });
         return rect;
       },
-      // 定义新增的右侧圆的位置更新逻辑
-      afterUpdate: function afterUpdate(cfg, combo) {
-        const group = combo.get('group');
-      },
     },
     'rect'
   );

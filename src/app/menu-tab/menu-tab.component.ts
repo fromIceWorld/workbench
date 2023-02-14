@@ -22,57 +22,56 @@ export class MenuTabComponent implements OnInit {
         type: 'node',
         icon: 'font-size',
         title: '文本',
-        img: '../../assets/img/text.svg',
       },
       {
         id: 'button',
         type: 'node',
         icon: 'tool',
         title: '按钮',
-        img: '../../assets/img/button.svg',
       },
     ],
-    layout: [
-      {
-        id: 'container',
-        type: 'combo',
-        icon: 'border-outer',
-        title: '布局容器',
-        img: '../../assets/img/input-box.svg',
-      },
-    ],
+    // layout: [
+    //   {
+    //     id: 'container',
+    //     type: 'combo',
+    //     icon: 'border-outer',
+    //     title: '布局容器',
+    //   },
+    // ],
     form: [
       {
         id: 'form',
         type: 'combo',
         title: 'form',
         icon: 'form',
-        img: '../../assets/img/form.svg',
       },
       {
         id: 'input',
         type: 'node',
         title: '输入框',
         icon: 'edit',
-        img: '../../assets/img/input.svg',
       },
       {
         id: 'radio',
         type: 'node',
         title: '单选框',
         icon: 'aim',
-
-        img: '../../assets/img/radio.svg',
       },
     ],
-
     dialog: [
       {
         id: 'dialog_model',
         type: 'combo',
         icon: 'switcher',
         title: 'dialog_model',
-        img: '../../assets/img/dialog.svg',
+      },
+    ],
+    table: [
+      {
+        id: 'table',
+        type: 'node',
+        icon: 'ordered-list',
+        title: 'table',
       },
     ],
   };

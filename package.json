@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
-    "start": "ng serve",
+    "start": "ng serve --port=4400",
     "build": "ng build --prod=true --outputHashing=none",
     "test": "ng test",
     "lint": "ng lint",
@@ -22,6 +22,7 @@
     "@angular/router": "~10.2.5",
     "@antv/g6": "^4.8.0",
     "document-register-element": "^1.7.2",
+    "html2canvas": "^1.4.1",
     "ng-zorro-antd": "^10.2.2",
     "rxjs": "~6.6.0",
     "tslib": "^2.0.0",
