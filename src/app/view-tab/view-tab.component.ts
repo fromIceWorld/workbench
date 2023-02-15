@@ -272,12 +272,6 @@ export class ViewTabComponent implements OnInit {
     a.click();
     a.remove();
     URL.revokeObjectURL(href);
-
-    let dom = document.createElement('div'),
-      script = document.createElement('script');
-    dom.innerHTML = html;
-    script.innerHTML = `${js}`;
-    document.body.append(script, dom);
   }
   exportCombo(combo) {
     let htmlString = '',
@@ -783,6 +777,7 @@ export class ViewTabComponent implements OnInit {
       false
     );
   }
+  // 创建 web-components 再转化成img 映射到 画布
   createElement(mode: any, tagName, js) {
     let div = document.createElement(tagName),
       css = document.createElement('style'),
@@ -790,8 +785,20 @@ export class ViewTabComponent implements OnInit {
     script.innerHTML = js;
     css.innerHTML = `${tagName}{display:inline-block}`;
     document.querySelector('app-cache').append(div, css, script);
-    this.focusNode = this.graph.addItem('node', mode);
-    this.focus(this.focusNode);
+    // 映射
+    // @ts-ignore
+    html2canvas(div).then((canvas) => {
+      let base = canvas.toDataURL('img');
+      Object.assign(mode, {
+        img: {
+          base,
+          width: div.offsetWidth,
+          height: div.offsetHeight,
+        },
+      });
+      this.focusNode = this.graph.addItem('node', { ...mode });
+      this.focus(this.focusNode);
+    });
   }
   handleCancel() {
     if (this.isCreate) {

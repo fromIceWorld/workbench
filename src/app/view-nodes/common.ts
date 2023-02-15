@@ -80,42 +80,35 @@ function registerCommon(configModule) {
     'common',
     {
       drawShape: function drawShape(cfg, group) {
-        const { tagName } = cfg,
-          dom = document.querySelector(tagName);
-        let width = dom.offsetWidth,
-          height = dom.offsetHeight;
+        const { img } = cfg;
         const style = this.getShapeStyle(cfg);
 
-        //@ts-ignore
-        html2canvas(dom).then((canvas) => {
-          let base = canvas.toDataURL('img');
-          group.addShape('image', {
-            attrs: {
-              width,
-              height,
-              x: -width / 2,
-              y: -height / 2,
-              // DOM's html
-              img: `
-               ${base}
-                  `,
-            },
-            // 在 G6 3.3 及之后的版本中，必须指定 name，可以是任意字符串，但需要在同一个自定义元素类型中保持唯一性
-            name: 'component',
-            draggable: true,
-            zIndex: -1,
-          });
+        group.addShape('image', {
+          attrs: {
+            width: img.width,
+            height: img.height,
+            x: -img.width / 2,
+            y: -img.height / 2,
+            // DOM's html
+            img: `
+             ${img.base}
+                `,
+          },
+          // 在 G6 3.3 及之后的版本中，必须指定 name，可以是任意字符串，但需要在同一个自定义元素类型中保持唯一性
+          name: 'component',
+          draggable: true,
+          zIndex: -1,
         });
         // 绘制一个矩形作为 keyShape，与 'rect' Combo 的 keyShape 一致
         const rect = group.addShape('rect', {
           attrs: {
             ...style,
-            x: -width / 2,
-            y: -height / 2,
+            x: -img.width / 2,
+            y: -img.height / 2,
             stroke: '#fff0',
             fill: '#fff0',
-            width,
-            height,
+            width: img.width,
+            height: img.height,
           },
           draggable: true,
           name: 'container', // 在 G6 3.3 及之后的版本中，必须指定 name，可以是任意字符串，但需要在同一个自定义元素类型中保持唯一性
