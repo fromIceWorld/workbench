@@ -122,59 +122,53 @@ function registerTable(configModule) {
     'table',
     {
       drawShape: function drawShape(cfg, group) {
-        const { headers, row } = cfg.config.html;
-        // 获取配置中的 Combo 内边距
-        cfg.padding = [55, 0, 0, 0];
-        let width = 0,
-          height = (row.value + 1) * 55;
-        headers.options.map((header) => {
-          let [title, len] = header.split(':');
-          width += Number(len);
-          return [title, Number(len)];
-        });
-        // 获取样式配置，style.width 与 style.height 对应 rect Combo 位置说明图中的 width 与 height
-        const style = this.getShapeStyle(cfg);
-        group.addShape('dom', {
+        const color = cfg.error ? '#F4664A' : '#30BF78';
+        const r = 2;
+        const shape = group.addShape('rect', {
           attrs: {
-            width: 500,
-            height: 200,
-            // DOM's html
-            html: `
-           <my-table></my-table>
-              `,
+            x: 0,
+            y: 0,
+            width: 200,
+            height: 60,
+            stroke: color,
+            radius: r,
           },
-          // 在 G6 3.3 及之后的版本中，必须指定 name，可以是任意字符串，但需要在同一个自定义元素类型中保持唯一性
-          name: 'dom-shape',
+          // must be assigned in G6 3.3 and later versions. it can be any string you want, but should be unique in a custom item type
+          name: 'main-box',
           draggable: true,
-          zIndex: -1,
         });
-        // 绘制一个矩形作为 keyShape，与 'rect' Combo 的 keyShape 一致
-        const rect = group.addShape('rect', {
+
+        group.addShape('rect', {
           attrs: {
-            ...style,
-            x: 0 - width / 2,
-            y: -height / 2,
-            stroke: '#fff0',
-            fill: '#fff0',
-            width,
-            height,
+            x: 0,
+            y: 0,
+            width: 200,
+            height: 20,
+            fill: color,
+            radius: [r, r, 0, 0],
           },
+          // must be assigned in G6 3.3 and later versions. it can be any string you want, but should be unique in a custom item type
+          name: 'title-box',
           draggable: true,
-          name: 'combo-keyShape', // 在 G6 3.3 及之后的版本中，必须指定 name，可以是任意字符串，但需要在同一个自定义元素类型中保持唯一性
-          zIndex: 100,
         });
-        // renderTable(cfg, group, false, null);
-        return rect;
+        // title text
+        group.addShape('text', {
+          attrs: {
+            textBaseline: 'top',
+            y: 4,
+            x: 10,
+            lineHeight: 20,
+            text: 'table',
+            fill: '#fff',
+          },
+          // must be assigned in G6 3.3 and later versions. it can be any string you want, but should be unique in a custom item type
+          name: 'title',
+        });
+
+        return shape;
       },
-      afterDraw(cfg, group) {},
-      update: function (cfg, combo) {
-        // renderTable(cfg, combo._cfg.group, true, combo);
-      },
-      // draw: function () {},
-      // 定义新增的右侧圆的位置更新逻辑
-      afterUpdate: function afterUpdate(cfg, combo) {},
     },
-    'rect'
+    'single-node'
   );
 }
 function renderTable(cfg, group, destroy, combo) {

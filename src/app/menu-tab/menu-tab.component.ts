@@ -30,14 +30,14 @@ export class MenuTabComponent implements OnInit {
         title: '按钮',
       },
     ],
-    // layout: [
-    //   {
-    //     id: 'container',
-    //     type: 'combo',
-    //     icon: 'border-outer',
-    //     title: '布局容器',
-    //   },
-    // ],
+    layout: [
+      {
+        id: 'container',
+        type: 'combo',
+        icon: 'border-outer',
+        title: '布局容器',
+      },
+    ],
     form: [
       {
         id: 'form',

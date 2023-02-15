@@ -484,6 +484,16 @@ export class ViewTabComponent implements OnInit {
           type: 'rect',
           size: [80, 30],
         },
+        nodeStateStyles: {
+          focus: {
+            lineWidth: 1,
+            stroke: '#1085cac9',
+            shadowOffsetX: 1,
+            shadowOffsetY: 1,
+            shadowColor: '#74b8e196',
+            radius: 2,
+          },
+        },
         defaultCombo: {
           type: 'cRect',
         },
@@ -604,6 +614,12 @@ export class ViewTabComponent implements OnInit {
       this.isCreate = false;
       this.isVisible = true;
     });
+    graph.on('node:mouseenter', (evt) => {
+      this.graph.setItemState(evt.item, 'focus', true);
+    });
+    graph.on('node:mouseleave', (evt) => {
+      this.graph.setItemState(evt.item, 'focus', false);
+    });
   }
   graphAddEventListener() {
     const graph = this.graph;
@@ -649,7 +665,6 @@ export class ViewTabComponent implements OnInit {
       const { item } = evt;
       this.focus(item);
     });
-
     graph.on('node:mouseleave', (evt) => {
       const { item } = evt;
       if (this.focusNode !== item) {
@@ -758,6 +773,10 @@ export class ViewTabComponent implements OnInit {
               type: id,
             });
             that.graph.createCombo({ ...config }, []);
+            that.relationshipGraph.addItem('node', {
+              ...config,
+              type: id,
+            });
           }
         }
       },
