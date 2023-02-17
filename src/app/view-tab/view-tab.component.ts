@@ -8,11 +8,13 @@ import {
 } from '@angular/core';
 import { NzModalService } from 'ng-zorro-antd/modal';
 import G6 from '../../../g6.min.js';
+import { enumArrow } from '../view-edges/index.js';
 import {
   configModule,
   registerButton,
   registerCommon,
   registerContainer,
+  registerDefault,
   registerDialog,
   registerInput,
   registerRadio,
@@ -22,6 +24,121 @@ import {
   registerText,
   registrForm,
 } from '../view-nodes/index';
+
+const processParallelEdgesOnAnchorPoint = (
+  edges,
+  offsetDiff = 15,
+  multiEdgeType = 'quadratic',
+  singleEdgeType = undefined,
+  loopEdgeType = undefined
+) => {
+  const len = edges.length;
+  const cod = offsetDiff * 2;
+  const loopPosition = [
+    'top',
+    'top-right',
+    'right',
+    'bottom-right',
+    'bottom',
+    'bottom-left',
+    'left',
+    'top-left',
+  ];
+  const edgeMap = {};
+  const tags = [];
+  const reverses = {};
+  for (let i = 0; i < len; i++) {
+    const edge = edges[i];
+    const { source, target, sourceAnchor, targetAnchor } = edge;
+    const sourceTarget = `${source}|${sourceAnchor}-${target}|${targetAnchor}`;
+
+    if (tags[i]) continue;
+    if (!edgeMap[sourceTarget]) {
+      edgeMap[sourceTarget] = [];
+    }
+    tags[i] = true;
+    edgeMap[sourceTarget].push(edge);
+    for (let j = 0; j < len; j++) {
+      if (i === j) continue;
+      const sedge = edges[j];
+      const {
+        source: src,
+        target: dst,
+        sourceAnchor: srcAnchor,
+        targetAnchor: dstAnchor,
+      } = sedge;
+
+      // 两个节点之间共同的边
+      // 第一条的source = 第二条的target
+      // 第一条的target = 第二条的source
+      if (!tags[j]) {
+        if (
+          source === dst &&
+          sourceAnchor === dstAnchor &&
+          target === src &&
+          targetAnchor === srcAnchor
+        ) {
+          edgeMap[sourceTarget].push(sedge);
+          tags[j] = true;
+          reverses[
+            `${src}|${srcAnchor}|${dst}|${dstAnchor}|${
+              edgeMap[sourceTarget].length - 1
+            }`
+          ] = true;
+        } else if (
+          source === src &&
+          sourceAnchor === srcAnchor &&
+          target === dst &&
+          targetAnchor === dstAnchor
+        ) {
+          edgeMap[sourceTarget].push(sedge);
+          tags[j] = true;
+        }
+      }
+    }
+  }
+
+  for (const key in edgeMap) {
+    const arcEdges = edgeMap[key];
+    const { length } = arcEdges;
+    for (let k = 0; k < length; k++) {
+      const current = arcEdges[k];
+      if (current.source === current.target) {
+        if (loopEdgeType) current.type = loopEdgeType;
+        // 超过8条自环边，则需要重新处理
+        current.loopCfg = {
+          position: loopPosition[k % 8],
+          dist: Math.floor(k / 8) * 20 + 50,
+        };
+        continue;
+      }
+      if (
+        length === 1 &&
+        singleEdgeType &&
+        (current.source !== current.target ||
+          current.sourceAnchor !== current.targetAnchor)
+      ) {
+        current.type = singleEdgeType;
+        continue;
+      }
+      current.type = multiEdgeType;
+      const sign =
+        (k % 2 === 0 ? 1 : -1) *
+        (reverses[
+          `${current.source}|${current.sourceAnchor}|${current.target}|${current.targetAnchor}|${k}`
+        ]
+          ? -1
+          : 1);
+      if (length % 2 === 1) {
+        current.curveOffset = sign * Math.ceil(k / 2) * cod;
+      } else {
+        current.curveOffset = sign * (Math.floor(k / 2) * cod + offsetDiff);
+      }
+    }
+  }
+  return edges;
+};
+
 @Component({
   selector: 'app-view-tab',
   templateUrl: './view-tab.component.html',
@@ -62,7 +179,7 @@ export class ViewTabComponent implements OnInit {
   scaleYdata = {
     nodes: [{ id: '2', type: 'scaleY', x: 0, y: 0 }],
   };
-  // eventNodes = [];
+  selectedIndex = 1;
   graph: any;
   relationshipGraph: any;
   focusNode: any = null;
@@ -79,6 +196,8 @@ export class ViewTabComponent implements OnInit {
   sourceSelect;
   targetSelect;
   diaDisplay: boolean = false;
+  sourceAnchorIdx;
+  targetAnchorIdx;
   idMapTag: Map<string, string> = new Map();
   constructor(
     private cd: ChangeDetectorRef,
@@ -93,6 +212,7 @@ export class ViewTabComponent implements OnInit {
     registerRadio(configModule);
     registerScaleX();
     registerScaleY();
+    registerDefault();
     registerText(configModule);
     registrForm(configModule);
     registerCommon(configModule);
@@ -126,7 +246,6 @@ export class ViewTabComponent implements OnInit {
       this.tabView = 'design-view';
     }
   }
-
   cacheData() {
     let cache = {
       view: {
@@ -474,35 +593,51 @@ export class ViewTabComponent implements OnInit {
         container: 'relation-ship',
         width,
         height,
-        defaultNode: {
-          type: 'rect',
-          size: [80, 30],
-        },
-        nodeStateStyles: {
-          focus: {
-            lineWidth: 1,
-            stroke: '#1085cac9',
-            shadowOffsetX: 1,
-            shadowOffsetY: 1,
-            shadowColor: '#74b8e196',
-            radius: 2,
-          },
-        },
-        defaultCombo: {
-          type: 'cRect',
-        },
         modes: {
-          default: ['drag-node', { type: 'create-edge', key: 'shift' }],
+          default: [
+            'drag-node',
+            // config the shouldBegin and shouldEnd to make sure the create-edge is began and ended at anchor-point circles
+            {
+              type: 'create-edge',
+              shouldBegin: (e) => {
+                // avoid beginning at other shapes on the node
+                if (e.target && e.target.get('name') !== 'anchor-point')
+                  return false;
+                this.sourceAnchorIdx = e.target.get('anchorPointIdx');
+                e.target.set('links', e.target.get('links') + 1); // cache the number of edge connected to this anchor-point circle
+                return true;
+              },
+              shouldEnd: (e) => {
+                // avoid ending at other shapes on the node
+                if (e.target && e.target.get('name') !== 'anchor-point')
+                  return false;
+                if (e.target) {
+                  this.targetAnchorIdx = e.target.get('anchorPointIdx');
+                  e.target.set('links', e.target.get('links') + 1); // cache the number of edge connected to this anchor-point circle
+                  return true;
+                }
+                this.targetAnchorIdx = undefined;
+                return true;
+              },
+              // update the sourceAnchor
+              // getEdgeConfig: () => {
+              //   return {
+              //     sourceAnchor: sourceAnchorIdx
+              //   }
+              // }
+            },
+          ],
+        },
+        defaultNode: {
+          type: 'rect-node',
         },
         defaultEdge: {
           type: 'quadratic',
           style: {
             stroke: '#F6BD16',
             lineWidth: 2,
-            endArrow: true,
           },
         },
-        plugins: [snapLine],
       });
     this.relationshipGraph = graph;
     graph.read(this.data);
@@ -516,11 +651,25 @@ export class ViewTabComponent implements OnInit {
         container: 'design-view',
         width,
         height,
-        defaultNode: {
-          type: 'rect',
-        },
+
         modes: {
           default: ['drag-node', 'drag-combo'],
+        },
+        defaultNode: {
+          type: 'circle',
+          size: [60],
+          labelCfg: {
+            position: 'bottom',
+          },
+          linkPoints: {
+            top: true,
+            right: true,
+            bottom: true,
+            left: true,
+          },
+          icon: {
+            show: true,
+          },
         },
         nodeStateStyles: {
           focus: {
@@ -574,7 +723,6 @@ export class ViewTabComponent implements OnInit {
   }
   relationshipGraphAddEvent() {
     const graph = this.relationshipGraph;
-    // 创建边之前
     graph.on('aftercreateedge', (e) => {
       const newEdge = e.edge,
         { sourceNode, targetNode } = newEdge._cfg,
@@ -582,11 +730,17 @@ export class ViewTabComponent implements OnInit {
           sourceNode._cfg.model.config.component,
         { methods: targetMethods } = targetNode._cfg.model.config.component,
         edges = graph.save().edges;
-      // 事件列表
       this.sourceEvents = sourceEvents;
       this.sourceMethods = sourceMethods;
       this.targetMethods = targetMethods;
-      G6.Util.processParallelEdges(edges, 50);
+      // update the sourceAnchor and targetAnchor for the newly added edge
+      graph.updateItem(e.edge, {
+        sourceAnchor: this.sourceAnchorIdx,
+        targetAnchor: this.targetAnchorIdx,
+      });
+
+      // update the curveOffset for parallel edges
+      processParallelEdgesOnAnchorPoint(edges);
       graph.getEdges().forEach((edge, i) => {
         graph.updateItem(edge, {
           curveOffset: edges[i].curveOffset,
@@ -597,22 +751,51 @@ export class ViewTabComponent implements OnInit {
       this.newEdge = newEdge;
       this.isVisible = true;
     });
-    graph.on('edge:click', (evt) => {
-      const { source, target, label } = evt.item._cfg.model;
-      const sourceNode = graph.findById(source),
-        targetNode = graph.findById(target);
-      const { event: sourceEvents } = sourceNode._cfg.model.config.component,
-        { methods: targetMethods } = targetNode._cfg.model.config.component;
-      this.sourceList = sourceEvents;
-      this.targetList = targetMethods;
-      this.isCreate = false;
-      this.isVisible = true;
+
+    // if create-edge is canceled before ending, update the 'links' on the anchor-point circles
+    graph.on('afterremoveitem', (e) => {
+      if (e.item && e.item.source && e.item.target) {
+        const sourceNode = graph.findById(e.item.source);
+        const targetNode = graph.findById(e.item.target);
+        const { sourceAnchor, targetAnchor } = e.item;
+        if (sourceNode && !isNaN(sourceAnchor)) {
+          const sourceAnchorShape = sourceNode
+            .getContainer()
+            .find(
+              (ele) =>
+                ele.get('name') === 'anchor-point' &&
+                ele.get('anchorPointIdx') === sourceAnchor
+            );
+          sourceAnchorShape.set('links', sourceAnchorShape.get('links') - 1);
+        }
+        if (targetNode && !isNaN(targetAnchor)) {
+          const targetAnchorShape = targetNode
+            .getContainer()
+            .find(
+              (ele) =>
+                ele.get('name') === 'anchor-point' &&
+                ele.get('anchorPointIdx') === targetAnchor
+            );
+          targetAnchorShape.set('links', targetAnchorShape.get('links') - 1);
+        }
+      }
     });
-    graph.on('node:mouseenter', (evt) => {
-      this.graph.setItemState(evt.item, 'focus', true);
+
+    // after clicking on the first node, the edge is created, update the sourceAnchor
+    graph.on('afteradditem', (e) => {
+      if (e.item && e.item.getType() === 'edge') {
+        graph.updateItem(e.item, {
+          sourceAnchor: this.sourceAnchorIdx,
+        });
+      }
     });
-    graph.on('node:mouseleave', (evt) => {
-      this.graph.setItemState(evt.item, 'focus', false);
+
+    // some listeners to control the state of nodes to show and hide anchor-point circles
+    graph.on('node:mouseenter', (e) => {
+      graph.setItemState(e.item, 'showAnchors', true);
+    });
+    graph.on('node:mouseleave', (e) => {
+      graph.setItemState(e.item, 'showAnchors', false);
     });
   }
   graphAddEventListener() {
@@ -769,7 +952,7 @@ export class ViewTabComponent implements OnInit {
             that.graph.createCombo({ ...config }, []);
             that.relationshipGraph.addItem('node', {
               ...config,
-              type: id,
+              type: 'rect-node',
             });
           }
         }
@@ -820,12 +1003,18 @@ export class ViewTabComponent implements OnInit {
     for (let i = 0; i < backs.length; i++) {
       labels.push([backs[i].value, this.methods[i]]);
     }
+    console.log(this.newEdge._cfg.model);
+    // 应用箭头样式
+    Object.assign(
+      this.newEdge._cfg.model.style,
+      enumArrow[this.selectedIndex].style
+    );
     this.newEdge.update({
       ...this.newEdge._cfg.model,
       label: `${labels.map((item) => item.join('->')).join('\n')}`,
     });
     this.isVisible = false;
-
+    console.log(this.selectedIndex);
     // this.modalService.openModals[0]._finishDialogClose(); // ng-modal 编译后数据非双向绑定
   }
   getBackStatus() {

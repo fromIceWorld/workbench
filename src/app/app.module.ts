@@ -11,6 +11,7 @@ import { NzModalModule } from 'ng-zorro-antd/modal';
 import { NzRadioModule } from 'ng-zorro-antd/radio';
 import { NzSelectModule } from 'ng-zorro-antd/select';
 import { NzSwitchModule } from 'ng-zorro-antd/switch';
+import { NzTabsModule } from 'ng-zorro-antd/tabs';
 import { NzTagModule } from 'ng-zorro-antd/tag';
 import { ConfigTabComponent } from './config-tab/config-tab.component';
 import { MenuTabComponent } from './menu-tab/menu-tab.component';
@@ -42,6 +43,7 @@ export * from '../../../custom-elements-demo/dist/custom-elements-demo/runtime.j
     NzModalModule,
     BrowserAnimationsModule,
     NzInputNumberModule,
+    NzTabsModule,
   ],
   providers: [],
   bootstrap: [WorkbenchComponent],

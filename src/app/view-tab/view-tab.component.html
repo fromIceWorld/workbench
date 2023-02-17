@@ -28,33 +28,38 @@
   #model
 >
   <ng-template #modalContent>
-    <div>
-      <span>event<->function:</span
-      ><nz-select [(ngModel)]="eventName" style="width: 100px">
-        <nz-option
-          *ngFor="let item of sourceEvents"
-          [nzValue]="item.value"
-          [nzLabel]="item.label"
-        ></nz-option>
-      </nz-select>
-      <nz-select [(ngModel)]="methodName" style="width: 100px">
-        <nz-option
-          *ngFor="let item of targetMethods"
-          [nzValue]="item.value"
-          [nzLabel]="item.label"
-        ></nz-option>
-      </nz-select>
-    </div>
-    <div *ngFor="let back of getBackStatus(); index as i">
-      <span>{{ back.label }}</span>
-      <nz-select [(ngModel)]="methods[i]" style="width: 100px">
-        <nz-option
-          *ngFor="let item of sourceMethods"
-          [nzValue]="item.value"
-          [nzLabel]="item.label"
-        ></nz-option>
-      </nz-select>
-    </div>
+    <nz-tabset [(nzSelectedIndex)]="selectedIndex">
+      <nz-tab nzTitle="event触发function">
+        <div>
+          <nz-select [(ngModel)]="eventName" style="width: 100px">
+            <nz-option
+              *ngFor="let item of sourceEvents"
+              [nzValue]="item.value"
+              [nzLabel]="item.label"
+            ></nz-option>
+          </nz-select>
+          <nz-select [(ngModel)]="methodName" style="width: 100px">
+            <nz-option
+              *ngFor="let item of targetMethods"
+              [nzValue]="item.value"
+              [nzLabel]="item.label"
+            ></nz-option>
+          </nz-select>
+        </div>
+        <div *ngFor="let back of getBackStatus(); index as i">
+          <span>{{ back.label }}</span>
+          <nz-select [(ngModel)]="methods[i]" style="width: 100px">
+            <nz-option
+              *ngFor="let item of sourceMethods"
+              [nzValue]="item.value"
+              [nzLabel]="item.label"
+            ></nz-option>
+          </nz-select>
+        </div>
+      </nz-tab>
+      <nz-tab nzTitle="数据赋值"> Content of Tab Pane 2 </nz-tab>
+      <nz-tab nzTitle="数据依赖"> Content of Tab Pane 3 </nz-tab>
+    </nz-tabset>
   </ng-template>
   <ng-template #modalFooter>
     <button nz-button nzType="default" (click)="handleCancel()">取消</button>
