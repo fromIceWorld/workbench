@@ -46,10 +46,10 @@ class INPUT_CONFIG extends NODE_CONFIG {
     ],
     methods: [
       { label: 'validate', value: 'validate' },
-      { label: 'change', value: 'change' },
       { label: 'clear', value: 'clear' },
-      { label: 'blur', value: 'blur' },
     ],
+    data: ['value'],
+    params: ['value'],
   };
 }
 function registerInput(configModule) {

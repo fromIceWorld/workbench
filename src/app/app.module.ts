@@ -3,6 +3,7 @@ import { NgModule } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { NzAlertModule } from 'ng-zorro-antd/alert';
 import { NzButtonModule } from 'ng-zorro-antd/button';
 import { NzIconModule } from 'ng-zorro-antd/icon';
 import { NzInputModule } from 'ng-zorro-antd/input';
@@ -44,6 +45,7 @@ export * from '../../../custom-elements-demo/dist/custom-elements-demo/runtime.j
     BrowserAnimationsModule,
     NzInputNumberModule,
     NzTabsModule,
+    NzAlertModule,
   ],
   providers: [],
   bootstrap: [WorkbenchComponent],

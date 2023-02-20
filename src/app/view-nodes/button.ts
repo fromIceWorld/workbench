@@ -73,11 +73,12 @@ class BUTTON_CONFIG extends NODE_CONFIG {
       { label: 'normal', value: 'normal' },
       { label: 'setDisabled', value: 'setDisabled' },
     ],
+    data: [],
+    params: [],
   };
 }
 function registerButton(configModule) {
   configModule['BUTTON_CONFIG'] = BUTTON_CONFIG;
-
   G6.registerNode(
     'button',
     {

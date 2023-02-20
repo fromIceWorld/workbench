@@ -29,7 +29,7 @@
 >
   <ng-template #modalContent>
     <nz-tabset [(nzSelectedIndex)]="selectedIndex">
-      <nz-tab nzTitle="event触发function">
+      <nz-tab nzTitle="event触发function" [nzDisabled]="!isCreate">
         <div>
           <nz-select [(ngModel)]="eventName" style="width: 100px">
             <nz-option
@@ -57,8 +57,31 @@
           </nz-select>
         </div>
       </nz-tab>
-      <nz-tab nzTitle="数据赋值"> Content of Tab Pane 2 </nz-tab>
-      <nz-tab nzTitle="数据依赖"> Content of Tab Pane 3 </nz-tab>
+      <nz-tab nzTitle="数据赋值" [nzDisabled]="!isCreate">
+        <nz-select [(ngModel)]="key" style="width: 150px">
+          <nz-option
+            [nzValue]="item"
+            [nzLabel]="item"
+            *ngFor="let item of sourceData"
+          ></nz-option>
+        </nz-select>
+        <span> = </span>
+        <nz-select [(ngModel)]="value" style="width: 150px">
+          <nz-option
+            [nzValue]="item"
+            [nzLabel]="item"
+            *ngFor="let item of targetData"
+          ></nz-option>
+        </nz-select>
+      </nz-tab>
+      <nz-tab nzTitle="数据依赖" [nzDisabled]="!isCreate">
+        <nz-alert
+          nzType="warning"
+          nzMessage="数据依赖：source的Input 依赖于target的Output"
+          nzShowIcon
+        ></nz-alert>
+        Content of Tab Pane 3
+      </nz-tab>
     </nz-tabset>
   </ng-template>
   <ng-template #modalFooter>

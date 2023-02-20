@@ -1,0 +1,17 @@
+::ng-deep .g6-grid-container {
+  z-index: 0 !important;
+  inset: 22px 0 0 22px !important;
+}
+::ng-deep .g6-component-contextmenu {
+  z-index: 3;
+}
+::ng-deep .g6-component-contextmenu ul {
+  margin: 0;
+  padding: 0;
+  cursor: pointer;
+}
+::ng-deep canvas {
+  background-color: rgba(255, 255, 255, 0);
+  z-index: 2;
+  position: absolute;
+}

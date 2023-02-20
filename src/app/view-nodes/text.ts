@@ -21,6 +21,8 @@ class TEXT_CONFIG extends NODE_CONFIG {
       { label: 'show', value: 'show' },
       { label: 'hide', value: 'hide' },
     ],
+    data: [{ label: 'text', value: 'text' }],
+    params: [{ label: 'text', value: 'text' }],
   };
 }
 function registerText(configModule) {

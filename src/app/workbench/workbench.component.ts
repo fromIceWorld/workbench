@@ -20,6 +20,7 @@ export class WorkbenchComponent implements OnInit {
     this.view.exportData();
   }
   changeView(e) {
+    console.log(this.view.tabView);
     this.view.changeView();
   }
   setConfig(e) {
