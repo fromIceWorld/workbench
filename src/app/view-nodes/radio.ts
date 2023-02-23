@@ -84,7 +84,7 @@ class RADIO_CONFIG extends NODE_CONFIG {
   component = {
     event: [{ label: 'change', value: 'change' }],
     methods: [],
-    data: [{ label: 'value', value: 'value' }],
+    data: ['value'],
     params: [{ label: 'value', value: 'value' }],
   };
 }

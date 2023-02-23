@@ -16,7 +16,7 @@ class TABLE_CONFIG extends NODE_CONFIG {
     },
     pagination: {
       type: 'boolean',
-      value: true,
+      value: false,
     },
     sizeChanger: {
       type: 'boolean',
@@ -114,6 +114,8 @@ class TABLE_CONFIG extends NODE_CONFIG {
       { label: 'setList', value: 'setList' },
       { label: 'setLoading', value: 'setLoading' },
     ],
+    data: ['listOfData'],
+    params: [],
   };
 }
 function registerTable(configModule) {

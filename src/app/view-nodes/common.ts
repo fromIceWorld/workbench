@@ -118,7 +118,6 @@ function registerCommon(configModule) {
         return rect;
       },
       afterUpdate(cfg, node) {
-        debugger;
         const { tagName } = cfg,
           dom = document.querySelector(tagName),
           group = node.getContainer();

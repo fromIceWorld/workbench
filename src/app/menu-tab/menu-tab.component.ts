@@ -1,4 +1,5 @@
 import { Component, EventEmitter, OnInit, Output } from '@angular/core';
+import { NodePosition } from '../view-tab/view-tab.component';
 enum ViewTypes {
   view,
   link,
@@ -21,6 +22,7 @@ export class MenuTabComponent implements OnInit {
         id: 'text',
         type: 'node',
         icon: 'font-size',
+        view: NodePosition.all,
         title: '文本',
       },
       {
@@ -28,6 +30,7 @@ export class MenuTabComponent implements OnInit {
         type: 'node',
         icon: 'tool',
         title: '按钮',
+        view: NodePosition.all,
       },
     ],
     layout: [
@@ -36,6 +39,7 @@ export class MenuTabComponent implements OnInit {
         type: 'combo',
         icon: 'border-outer',
         title: '布局容器',
+        view: NodePosition.all,
       },
     ],
     form: [
@@ -44,18 +48,21 @@ export class MenuTabComponent implements OnInit {
         type: 'combo',
         title: 'form',
         icon: 'form',
+        view: NodePosition.all,
       },
       {
         id: 'input',
         type: 'node',
         title: '输入框',
         icon: 'edit',
+        view: NodePosition.all,
       },
       {
         id: 'radio',
         type: 'node',
         title: '单选框',
         icon: 'aim',
+        view: NodePosition.all,
       },
     ],
     dialog: [
@@ -64,6 +71,7 @@ export class MenuTabComponent implements OnInit {
         type: 'combo',
         icon: 'switcher',
         title: 'dialog_model',
+        view: NodePosition.all,
       },
     ],
     table: [
@@ -72,6 +80,17 @@ export class MenuTabComponent implements OnInit {
         type: 'node',
         icon: 'ordered-list',
         title: 'table',
+        view: NodePosition.all,
+      },
+    ],
+    api: [
+      {
+        id: 'api',
+        type: 'node',
+        icon: 'radar-chart',
+        title: 'api',
+        node: 'api',
+        view: NodePosition.all,
       },
     ],
   };

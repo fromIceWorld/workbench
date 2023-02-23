@@ -58,29 +58,57 @@
         </div>
       </nz-tab>
       <nz-tab nzTitle="数据赋值" [nzDisabled]="!isCreate">
-        <nz-select [(ngModel)]="key" style="width: 150px">
-          <nz-option
-            [nzValue]="item"
-            [nzLabel]="item"
-            *ngFor="let item of sourceData"
-          ></nz-option>
-        </nz-select>
-        <span> = </span>
-        <nz-select [(ngModel)]="value" style="width: 150px">
-          <nz-option
-            [nzValue]="item"
-            [nzLabel]="item"
-            *ngFor="let item of targetData"
-          ></nz-option>
-        </nz-select>
+        <p>
+          hook:
+          <nz-select [(ngModel)]="hook" style="width: 150px">
+            <nz-option
+              *ngFor="let item of sourceEvents"
+              [nzValue]="item.value"
+              [nzLabel]="item.label"
+            ></nz-option>
+          </nz-select>
+        </p>
+        <p>
+          赋值:
+          <nz-select [(ngModel)]="key" style="width: 150px">
+            <nz-option
+              [nzValue]="item"
+              [nzLabel]="item"
+              *ngFor="let item of sourceData"
+            ></nz-option>
+          </nz-select>
+          <span> => </span>
+          <nz-select [(ngModel)]="value" style="width: 150px">
+            <nz-option
+              [nzValue]="item"
+              [nzLabel]="item"
+              *ngFor="let item of targetData"
+            ></nz-option>
+          </nz-select>
+        </p>
       </nz-tab>
       <nz-tab nzTitle="数据依赖" [nzDisabled]="!isCreate">
         <nz-alert
           nzType="warning"
-          nzMessage="数据依赖：source的Input 依赖于target的Output"
+          nzMessage="数据依赖：target的method 依赖于source的data"
           nzShowIcon
         ></nz-alert>
-        Content of Tab Pane 3
+        数据项：
+        <nz-tag
+          *ngFor="let d of sourceData; index as i"
+          nzMode="checkable"
+          [nzChecked]="sourceChecked[i]"
+          (nzCheckedChange)="checkChange($event, i)"
+          >{{ d }}</nz-tag
+        >
+        方法
+        <nz-select [(ngModel)]="method" style="width: 100px">
+          <nz-option
+            *ngFor="let item of targetMethods"
+            [nzValue]="item.value"
+            [nzLabel]="item.label"
+          ></nz-option>
+        </nz-select>
       </nz-tab>
     </nz-tabset>
   </ng-template>

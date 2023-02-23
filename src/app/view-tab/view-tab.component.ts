@@ -12,6 +12,7 @@ import { ralationMenu } from '../node-menu/relation-menu.js';
 import { enumArrow } from '../view-edges/index.js';
 import {
   configModule,
+  registerAPI,
   registerButton,
   registerCommon,
   registerContainer,
@@ -30,6 +31,11 @@ enum LineType {
   event,
   data,
   params,
+}
+export enum NodePosition {
+  view = 1,
+  relation,
+  all,
 }
 
 const processParallelEdgesOnAnchorPoint = (
@@ -199,6 +205,7 @@ export class ViewTabComponent implements OnInit {
   sourceMethods = [];
   targetMethods = [];
   sourceData = [];
+  sourceChecked = [];
   targetData = [];
   isCreate: boolean = false;
   newEdge;
@@ -209,6 +216,8 @@ export class ViewTabComponent implements OnInit {
   targetAnchorIdx;
   key = '';
   value = '';
+  method = '';
+  hook = '';
   idMapTag: Map<string, string> = new Map();
   constructor(
     private cd: ChangeDetectorRef,
@@ -224,6 +233,7 @@ export class ViewTabComponent implements OnInit {
     registerScaleX();
     registerScaleY();
     registerDefault();
+    registerAPI(configModule);
     registerText(configModule);
     registrForm(configModule);
     registerCommon(configModule);
@@ -235,17 +245,11 @@ export class ViewTabComponent implements OnInit {
         container: 'scaleX',
         width: 1942,
         height: 22,
-        defaultNode: {
-          type: 'modelRect',
-        },
       }),
       scaleYgraph = new G6.Graph({
         container: 'scaleY',
         width: 22,
         height: 1102,
-        defaultNode: {
-          type: 'modelRect',
-        },
       });
     scaleXgraph.read(this.scaleXdata);
     scaleYgraph.read(this.scaleYdata);
@@ -309,7 +313,6 @@ export class ViewTabComponent implements OnInit {
     this.graph.read({});
   }
   exportData() {
-    debugger;
     // 节点数据
     const nodes = this.graph.getNodes(),
       combos = this.graph.getCombos();
@@ -333,42 +336,68 @@ export class ViewTabComponent implements OnInit {
       );
     // 连线数据
     const edges = this.relationshipGraph.getEdges().map((edge) => {
-      const { source, target, label } = edge._cfg.model;
+      const { source, target, label, edgeType } = edge._cfg.model;
       return {
         source,
         target,
         label,
+        edgeType,
       };
     });
-    console.log('edge', edges);
     edges
       .map((edge) => {
-        const { source, target, label } = edge,
-          eventsArray = label
-            .split('\n')
-            .map((eventToFn: string) => eventToFn.split('->'));
-        const eventJs = `
+        const { source, target, label, edgeType } = edge;
+        let jsString = ``;
+        // 不同的关系连线，逻辑不同
+        if (edgeType === LineType.event) {
+          let [event, fn] = label.split('->');
+          jsString = `
                   //初始化事件
-                  ${JSON.stringify(eventsArray)}.forEach((fnTofn, index)=>{
-                      const [event,fn] = fnTofn;
-                      const sourceDOM = document.querySelector('${this.idMapTag.get(
-                        source.split('-')[1]
+                  const sourceDOM = document.querySelector('${this.idMapTag.get(
+                    source.split('-')[1]
+                  )}'),
+                      targetDOM = document.querySelector('${this.idMapTag.get(
+                        target.split('-')[1]
                       )}'),
-                          targetDOM = document.querySelector('${this.idMapTag.get(
-                            target.split('-')[1]
-                          )}');
-                      if(index === 0){
-                          sourceDOM.addEventListener(event, (e)=>{
-                              targetDOM._ngElementStrategy.componentRef.instance[fn]();
-                          })
-                      }else{
-                          targetDOM.addEventListener(event, (e)=>{
-                              sourceDOM._ngElementStrategy.componentRef.instance[fn]();
-                          })
-                      }
-                  });
+                      targetPath = (targetDOM.getAttribute('pre')||'').split('.');
+                  let targetIns = targetPath.reduce((pre,key)=>pre[key],targetDOM);
+                  sourceDOM.addEventListener('${event}', (e)=>{
+                    targetIns['${fn}']();
+                  })    
               `;
-        js += eventJs;
+        } else if (edgeType === LineType.data) {
+          let [hook, sourceData, targetData] = label.split(/[ =]/);
+          jsString = `
+          const sourceDOM = document.querySelector('${this.idMapTag.get(
+            source.split('-')[1]
+          )}'),
+                targetDOM = document.querySelector('${this.idMapTag.get(
+                  target.split('-')[1]
+                )}'),
+                sourcePath = (sourceDOM.getAttribute('pre')||'').split('.'),
+                targetPath = (targetDOM.getAttribute('pre')||'').split('.');
+          let sourceIns = sourcePath.reduce((pre,key)=>pre[key],sourceDOM),
+              targetIns = targetPath.reduce((pre,key)=>pre[key],targetDOM);      
+          sourceDOM.addEventListener('${hook}',()=>{
+            targetIns['${targetData}'] = sourceIns['${sourceData}'];
+            targetIns.check();  
+          })
+          `;
+        } else if (edgeType === LineType.params) {
+          jsString = `
+          const sourceDOM = document.querySelector('${this.idMapTag.get(
+            source.split('-')[1]
+          )}'),
+                targetDOM = document.querySelector('${this.idMapTag.get(
+                  target.split('-')[1]
+                )}'),
+                sourcePath = (sourceDOM.getAttribute('pre')||'').split('.'),
+                targetPath = (targetDOM.getAttribute('pre')||'').split('.');
+          let sourceIns = sourcePath.reduce((pre,key)=>pre[key],sourceDOM),
+              targetIns = targetPath.reduce((pre,key)=>pre[key],targetDOM);   
+          `;
+        }
+        js += jsString;
       })
       .join();
     // 下载 html文件
@@ -404,6 +433,10 @@ export class ViewTabComponent implements OnInit {
     a.click();
     a.remove();
     URL.revokeObjectURL(href);
+  }
+  checkChange(e, index) {
+    this.sourceChecked[index] = e;
+    console.log(this.sourceChecked);
   }
   exportCombo(combo) {
     let htmlString = '',
@@ -564,7 +597,7 @@ export class ViewTabComponent implements OnInit {
     this.graph.removeItem(this.focusNode);
     // 节点需要更新 view
     if (this.focusNode) {
-      this.createElement(JSON.parse(JSON.stringify(model2)), tagName, js);
+      this.createElement(html, JSON.parse(JSON.stringify(model2)), tagName, js);
       if (relationTarget) {
         this.relationshipGraph.updateItem(relationTarget, {
           ...relationTarget._cfg.model,
@@ -654,22 +687,6 @@ export class ViewTabComponent implements OnInit {
         modes: {
           default: ['drag-node', 'drag-combo'],
         },
-        defaultNode: {
-          type: 'circle',
-          size: [60],
-          labelCfg: {
-            position: 'bottom',
-          },
-          linkPoints: {
-            top: true,
-            right: true,
-            bottom: true,
-            left: true,
-          },
-          icon: {
-            show: true,
-          },
-        },
         nodeStateStyles: {
           focus: {
             lineWidth: 1,
@@ -679,6 +696,64 @@ export class ViewTabComponent implements OnInit {
             shadowColor: '#74b8e196',
             radius: 2,
           },
+        },
+        defaultNode: {
+          /* node type */
+          type: 'star',
+          /* node size */
+          size: [60, 30],
+          /* style for the keyShape */
+          // style: {
+          //   fill: '#9EC9FF',
+          //   stroke: '#5B8FF9',
+          //   lineWidth: 3,
+          // },
+          labelCfg: {
+            /* label's position, options: center, top, bottom, left, right */
+            position: 'bottom',
+            /* label's offset to the keyShape, 4 by default */
+            offset: 20,
+            /* label's style */
+            //   style: {
+            //     fontSize: 20,
+            //     fill: '#ccc',
+            //     fontWeight: 500
+            //   }
+          },
+          /* configurations for four linkpoints */
+          linkPoints: {
+            top: true,
+            right: true,
+            bottom: true,
+            left: true,
+            /* linkPoints' size, 8 by default */
+            //   size: 5,
+            /* linkPoints' style */
+            //   fill: '#ccc',
+            //   stroke: '#333',
+            //   lineWidth: 2,
+          },
+          /* icon configuration */
+          icon: {
+            /* whether show the icon, false by default */
+            show: true,
+            /* icon's img address, string type */
+            // img: 'https://gw.alipayobjects.com/zos/basement_prod/012bcf4f-423b-4922-8c24-32a89f8c41ce.svg',
+            /* icon's size, 20 * 20 by default: */
+            //   width: 40,
+            //   height: 40
+          },
+          /* styles for different states, there are built-in styles for states: active, inactive, selected, highlight, disable */
+          // nodeStateStyles: {
+          //   // node style of active state
+          //   active: {
+          //     fillOpacity: 0.8,
+          //   },
+          //   // node style of selected state
+          //   selected: {
+          //     lineWidth: 5,
+          //   },
+          // },
         },
         defaultCombo: {
           type: 'rect', // Combo 类型
@@ -724,24 +799,8 @@ export class ViewTabComponent implements OnInit {
     const graph = this.relationshipGraph;
     graph.on('aftercreateedge', (e) => {
       const newEdge = e.edge,
-        { sourceNode, targetNode } = newEdge._cfg,
-        {
-          event: sourceEvents,
-          methods: sourceMethods,
-          params: sourceParams,
-          data: sourceData,
-        } = sourceNode._cfg.model.config.component,
-        {
-          methods: targetMethods,
-          params: targetParams,
-          data: targetData,
-        } = targetNode._cfg.model.config.component,
         edges = graph.save().edges;
-      this.sourceEvents = sourceEvents;
-      this.sourceMethods = sourceMethods;
-      this.targetMethods = targetMethods;
-      this.sourceData = sourceData;
-      this.targetData = targetData;
+      this.cacheSourceAndTargetNodeDataByEdge(newEdge);
       // update the sourceAnchor and targetAnchor for the newly added edge
       graph.updateItem(e.edge, {
         sourceAnchor: this.sourceAnchorIdx,
@@ -804,15 +863,62 @@ export class ViewTabComponent implements OnInit {
       graph.setItemState(e.item, 'showAnchors', false);
     });
     graph.on('edge:click', (e) => {
+      debugger;
+      console.log(e.item._cfg.model.label);
       this.newEdge = e.item;
       this.isVisible = true;
       this.isCreate = false;
       this.selectedIndex = e.item._cfg.model.edgeType;
+      const label = e.item._cfg.model.label;
+      this.cacheSourceAndTargetNodeDataByEdge(e.item);
+      //回显数据
+      if (this.selectedIndex == LineType.event) {
+        // 分割线 ->
+        let [event, fn] = label.split('->');
+        this.eventName = event;
+        this.methodName = fn;
+      } else if (this.selectedIndex == LineType.data) {
+        // 分割线 =
+        let [hook, sourceData, targetData] = label.split(/[ =]/);
+        this.hook = hook;
+        this.key = sourceData;
+        this.value = targetData;
+      } else if (this.selectedIndex == LineType.params) {
+        // 分割线 =>
+        let [data, method] = label.split('=>');
+        let selectedValue = JSON.parse(data);
+        this.sourceChecked = this.sourceData.map((value) =>
+          selectedValue.includes(value)
+        );
+        this.method = method;
+      }
+
       console.log(e);
     });
     graph.on('node:click', (e) => {
       console.log('ralation', e);
     });
+  }
+  // 通过edge 将source和target节点的数据缓存
+  cacheSourceAndTargetNodeDataByEdge(edge) {
+    const { sourceNode, targetNode } = edge._cfg,
+      {
+        event: sourceEvents,
+        methods: sourceMethods,
+        params: sourceParams,
+        data: sourceData,
+      } = sourceNode._cfg.model.config.component,
+      {
+        methods: targetMethods,
+        params: targetParams,
+        data: targetData,
+      } = targetNode._cfg.model.config.component;
+    this.sourceEvents = sourceEvents;
+    this.sourceMethods = sourceMethods;
+    this.targetMethods = targetMethods;
+    this.sourceData = sourceData;
+    this.sourceChecked = new Array(sourceData.length).fill(false);
+    this.targetData = targetData;
   }
   graphAddEventListener() {
     const graph = this.graph;
@@ -872,9 +978,15 @@ export class ViewTabComponent implements OnInit {
       const { item, keyCode } = evt;
       if (keyCode === 46) {
         //delete
-        graph.removeItem(this.focusNode);
-        graph.removeItem(this.focusCombo);
+        let node = this.focusNode || this.focusCombo;
+        const { tagName } = node.getModel();
+        graph.removeItem(node);
         this.focusNode = null;
+        // 在关联图删除对应节点
+        const relationNode = this.relationshipGraph.find('node', (node) => {
+          return node.get('model').tagName === tagName;
+        });
+        this.relationshipGraph.removeItem(relationNode);
       } else if (keyCode >= 37 && keyCode <= 40) {
         // 左上右下
         if (this.focusNode) {
@@ -928,6 +1040,8 @@ export class ViewTabComponent implements OnInit {
         if ((event.target as HTMLElement).tagName === 'CANVAS') {
           let { offsetX, offsetY } = event,
             { id } = that.dragTarget as HTMLElement,
+            view = (that.dragTarget as any).view,
+            nodeType = (that.dragTarget as any).node,
             targetX = offsetX,
             targetY = offsetY,
             targetType = (that.dragTarget as any).comonentType;
@@ -947,35 +1061,53 @@ export class ViewTabComponent implements OnInit {
             y: targetY,
             config: nodeSetting,
           };
+          //
           if (targetType === 'node') {
-            that.createElement(
-              {
+            if (view & NodePosition.view) {
+              if (nodeType) {
+                that.focusNode = that.graph.addItem('node', {
+                  tagName: tagName,
+                  ...config,
+                  id: 'view' + '-' + String(UUID),
+                  type: nodeType || 'common',
+                });
+                that.focus(that.focusNode);
+              } else {
+                that.createElement(
+                  html,
+                  {
+                    tagName: tagName,
+                    ...config,
+                    id: 'view' + '-' + String(UUID),
+                    type: nodeType || 'common',
+                  },
+                  tagName,
+                  js
+                );
+              }
+            }
+            if (view & NodePosition.relation) {
+              that.relationshipGraph.addItem('node', {
                 tagName: tagName,
-                label: tagName,
                 ...config,
-                id: 'view' + '-' + String(UUID),
-                type: 'common',
-              },
-              tagName,
-              js
-            );
-            that.relationshipGraph.addItem('node', {
-              tagName: tagName,
-              label: tagName,
-              ...config,
-              id: 'relation' + '-' + String(UUID) + '-' + '0',
-              type: id,
-            });
+                id: 'relation' + '-' + String(UUID) + '-' + '0',
+                type: nodeType || id,
+              });
+            }
           } else if (targetType === 'combo') {
             Object.assign(config, {
               label: id,
-              type: id,
+              id: 'view' + '-' + String(UUID),
             });
-            that.graph.createCombo({ ...config }, []);
-            that.relationshipGraph.addItem('node', {
-              ...config,
-              type: 'rect-node',
-            });
+            if (view & NodePosition.view) {
+              that.graph.createCombo({ ...config }, []);
+            }
+            if (view & NodePosition.relation) {
+              that.relationshipGraph.addItem('node', {
+                ...config,
+                id: 'relation' + '-' + String(UUID) + '-' + '0',
+              });
+            }
           }
         }
       },
@@ -983,10 +1115,12 @@ export class ViewTabComponent implements OnInit {
     );
   }
   // 创建 web-components 再转化成img 映射到 画布
-  createElement(mode: any, tagName, js) {
-    let div = document.createElement(tagName),
+  createElement(html: string, mode: any, tagName, js) {
+    let container = document.createElement('div'),
       css = document.createElement('style'),
       script = document.createElement('script');
+    container.innerHTML = html;
+    const div = container.firstChild as HTMLElement;
     script.innerHTML = js;
     css.innerHTML = `${tagName}{display:inline-block}`;
     document.querySelector('app-cache').append(div, css, script);
@@ -1021,6 +1155,7 @@ export class ViewTabComponent implements OnInit {
     this.newEdge = null;
   }
   handleOk() {
+    debugger;
     let labels = [[this.eventName, this.methodName]],
       backs = this.getBackStatus();
     for (let i = 0; i < backs.length; i++) {
@@ -1042,7 +1177,19 @@ export class ViewTabComponent implements OnInit {
       this.newEdge.update({
         ...this.newEdge._cfg.model,
         edgeType: this.selectedIndex,
-        label: `${this.key}=${this.value}`,
+        label: `${this.hook} ${this.key}=${this.value}`,
+      });
+    } else if (this.selectedIndex === LineType.params) {
+      let dataCache = [];
+      for (let i = 0; i < this.sourceChecked.length; i++) {
+        if (this.sourceChecked[i]) {
+          dataCache.push(this.sourceData[i]);
+        }
+      }
+      this.newEdge.update({
+        ...this.newEdge._cfg.model,
+        edgeType: this.selectedIndex,
+        label: `${JSON.stringify(dataCache)}=>${this.method}`,
       });
     }
 

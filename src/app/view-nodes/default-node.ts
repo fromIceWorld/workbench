@@ -1,4 +1,5 @@
 import G6 from '../../../g6.min.js';
+import { measureText } from './node/base/index.js';
 
 // G6.Util.processParallelEdges processes the edges with same source node and target node,
 // on this basis, processParallelEdgesOnAnchorPoint consider the end nodes and anchor points in the same time.
@@ -122,8 +123,51 @@ function registerDefault() {
   G6.registerNode(
     'rect-node',
     {
-      // draw anchor-point circles according to the anchorPoints in afterDraw
+      options: {
+        myName: 'text',
+        size: [200, 30],
+        style: {
+          fill: '#1085cac9',
+          radius: [3, 3],
+        },
+      },
+      draw(cfg, group) {
+        const self = this,
+          name = cfg.label;
+        // 获取配置中的 Combo 内边距
+        cfg.padding = [5, 5, 5, 5];
+        // 获取样式配置，style.width 与 style.height 对应 rect Combo 位置说明图中的 width 与 height
+        const style = self.getShapeStyle(cfg),
+          width = measureText(name, '14px');
+        // 绘制一个矩形作为 keyShape，与 'rect' Combo 的 keyShape 一致
+        return group.addShape('rect', {
+          attrs: {
+            ...style,
+            width: width + 30,
+            x: -(width + 30) / 2,
+            height: style.height,
+          },
+          draggable: true,
+          name: 'text-border',
+        });
+      },
       afterDraw(cfg, group) {
+        const name = cfg.label,
+          width = measureText(name, '14px');
+        group.addShape('text', {
+          id: 'text',
+          attrs: {
+            text: name,
+            x: -(width + 30) / 2 + 15,
+            y: 2,
+            fontSize: 14,
+            textAlign: 'start',
+            textBaseline: 'middle',
+            fill: '#ffffff',
+          },
+          name: 'text-shape',
+        });
+
         const bbox = group.getBBox();
         const anchorPoints = this.getAnchorPoints(cfg);
         anchorPoints.forEach((anchorPos, i) => {
@@ -132,12 +176,15 @@ function registerDefault() {
               r: 5,
               x: bbox.x + bbox.width * anchorPos[0],
               y: bbox.y + bbox.height * anchorPos[1],
+              fill: '#fff',
+              stroke: '#5F95FF',
             },
             // must be assigned in G6 3.3 and later versions. it can be any string you want, but should be unique in a custom item type
             name: `anchor-point`, // the name, for searching by group.find(ele => ele.get('name') === 'anchor-point')
             anchorPointIdx: i, // flag the idx of the anchor-point circle
             links: 0, // cache the number of edges connected to this shape
             visible: false, // invisible by default, shows up when links > 1 or the node is in showAnchors state
+            draggable: true, // allow to catch the drag events on this shape
           });
         });
       },
@@ -164,6 +211,24 @@ function registerDefault() {
             else point.hide();
           });
         }
+      },
+      update(cfg, node) {
+        const name = cfg.label,
+          textLength = measureText(name, '14px'),
+          group = node.getContainer();
+        let textShape, box;
+        group.find((item) => {
+          if (item.get('name') === 'text-shape') {
+            textShape = item;
+          }
+          if (item.get('name') === 'text-border') {
+            box = item;
+          }
+        });
+        textShape.attr('text', name);
+        box.attr({
+          width: textLength + 30,
+        });
       },
     },
     'rect'
