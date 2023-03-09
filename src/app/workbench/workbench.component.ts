@@ -1,4 +1,5 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
+import { EventBusService } from '../event-bus.service';
 
 @Component({
   selector: 'app-workbench',
@@ -9,7 +10,7 @@ export class WorkbenchComponent implements OnInit {
   @ViewChild('menu') menu;
   @ViewChild('view') view;
   @ViewChild('config') config;
-  constructor() {}
+  constructor(private bus: EventBusService) {}
   cacheData(e) {
     this.view.cacheData();
   }
@@ -24,10 +25,12 @@ export class WorkbenchComponent implements OnInit {
     this.view.changeView();
   }
   setConfig(e) {
-    this.config.config = e;
+    const { html, css } = e;
+    this.config.config = html;
   }
   ngOnInit(): void {}
   update(e) {
+    const { html, css } = e;
     let config = e;
     this.view.updateNode(config);
   }

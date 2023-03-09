@@ -1,10 +1,8 @@
 import {
   Component,
   ElementRef,
-  EventEmitter,
-  Input,
+  Inject,
   OnInit,
-  Output,
   ViewChild,
 } from '@angular/core';
 
@@ -14,9 +12,19 @@ import {
   styleUrls: ['./config-tab.component.css'],
 })
 export class ConfigTabComponent implements OnInit {
-  @Input() config = {};
-  @Output() updatePoint = new EventEmitter();
-  @Output() changeLayout = new EventEmitter();
+  html = {};
+  css = {};
+  constructor(@Inject('bus') private bus) {
+    console.log('初始化接收');
+    this.bus.center.subscribe((res: any) => {
+      const { html, css, type } = res;
+      if (type === 'config') {
+        this.html = html;
+        this.css = css;
+        console.log(html, css, type);
+      }
+    });
+  }
   originKeys(obj) {
     return Object.keys(obj);
   }
@@ -24,14 +32,34 @@ export class ConfigTabComponent implements OnInit {
     return Array.isArray(value);
   }
   updateConfig(e?) {
-    this.updatePoint.emit(this.config);
+    this.bus.center.next({
+      html: this.html,
+      css: this.css,
+      type: 'update',
+    });
   }
-  selectChange(e) {
-    this.updatePoint.emit(this.config);
+  updatePoint(e, type) {
+    this.bus.center.next({
+      type: 'edit',
+      value: type,
+    });
+  }
+  updateFocus(e) {
+    this.bus.center.next({
+      type: 'status',
+      value: true,
+    });
+  }
+  updateBlur(e) {
+    this.bus.center.next({
+      type: 'status',
+      value: false,
+    });
+    this.updateConfig();
   }
   checkTag(tag, origin) {
     origin.value = tag;
-    this.updatePoint.emit(this.config);
+    // this.updatePoint.emit(this.config);
   }
   ngOnInit(): void {}
   inputVisible = false;
@@ -64,8 +92,9 @@ export class ConfigTabComponent implements OnInit {
     this.updateConfig();
   }
   changeFlex(e, id) {
-    this.changeLayout.emit({
-      layout: id,
+    this.bus.center.next({
+      type: 'layout',
+      value: id,
     });
   }
 }

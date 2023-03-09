@@ -55,9 +55,9 @@
     ></i>
   </span>
 
-  <div *ngFor="let menu of menuConfigKeys()">
-    <p>{{ menu }}</p>
-    <span *ngFor="let btn of menuConfig[menu]">
+  <div *ngFor="let menu of menuConfig">
+    <p>{{ menu[0] }}</p>
+    <span *ngFor="let btn of menu[1]">
       <i
         draggable="true"
         [title]="btn.title"
@@ -65,6 +65,7 @@
         nz-icon
         [type]="btn.icon"
         [comonentType]="btn.type"
+        [component]="btn.component"
         [view]="btn.view || 'common'"
         [node]="btn.node"
         nzTheme="outline"

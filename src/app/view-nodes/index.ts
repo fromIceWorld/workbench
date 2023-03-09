@@ -1,7 +1,6 @@
 export * from './api';
 export * from './button';
 export * from './common';
-export * from './container/index';
 export * from './default-node';
 export * from './dialog/index';
 export * from './form/base-form';

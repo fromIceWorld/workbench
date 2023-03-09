@@ -1,4 +1,3 @@
-let configModule = {};
 class NODE_CONFIG {}
 function measureText(
   text,
@@ -18,4 +17,4 @@ function getFontSize() {
   return getComputedStyle(document.body).getPropertyValue('font-size');
 }
 
-export { configModule, NODE_CONFIG, measureText };
+export { NODE_CONFIG, measureText };

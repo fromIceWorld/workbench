@@ -1,44 +1,9 @@
 import G6 from '../../../g6.min.js';
-import { measureText, NODE_CONFIG } from './node/base/index.js';
+import { measureText } from './node/base/index.js';
 
 // 独属于每一个节点的render函数，在G6中会被抹除，通过原型保存
-class API_CONFIG extends NODE_CONFIG {
-  className = 'APIComponent'; // 暴露出的组件class名称【组件可以注册到window上，并把配置同时暴露】
-  html = {
-    method: {
-      type: 'array',
-      options: [
-        { label: 'get', value: 'get' },
-        { label: 'post', value: 'post' },
-        { label: 'put', value: 'put' },
-        { label: 'delete', value: 'delete' },
-      ],
-      value: 'get',
-    },
-    api: {
-      type: 'string',
-      value:
-        'https://www.fastmock.site/mock/14c2723aefa052a75b2a6feeed0cf387/suger/records',
-    },
-  };
-  css = {
-    classes: '',
-    style: {},
-  };
-  component = {
-    event: [
-      { label: 'loading', value: 'loading' },
-      { label: 'error', value: 'error' },
-      { label: 'success200', value: 'success200' },
-      { label: 'success500', value: 'success500' },
-    ],
-    methods: [{ label: 'request', value: 'request' }],
-    data: ['data', 'message'],
-    params: [],
-  };
-}
-function registerAPI(configModule) {
-  configModule['API_CONFIG'] = API_CONFIG;
+
+function registerAPI() {
   G6.registerNode(
     'api',
     {
@@ -84,50 +49,29 @@ function registerAPI(configModule) {
           name: 'text-shape',
         });
 
-        const bbox = group.getBBox();
-        const anchorPoints = this.getAnchorPoints(cfg);
-        anchorPoints.forEach((anchorPos, i) => {
-          group.addShape('circle', {
-            attrs: {
-              r: 5,
-              x: bbox.x + bbox.width * anchorPos[0],
-              y: bbox.y + bbox.height * anchorPos[1],
-              fill: '#fff',
-              stroke: '#5F95FF',
-            },
-            // must be assigned in G6 3.3 and later versions. it can be any string you want, but should be unique in a custom item type
-            name: `anchor-point`, // the name, for searching by group.find(ele => ele.get('name') === 'anchor-point')
-            anchorPointIdx: i, // flag the idx of the anchor-point circle
-            links: 0, // cache the number of edges connected to this shape
-            visible: false, // invisible by default, shows up when links > 1 or the node is in showAnchors state
-            draggable: true, // allow to catch the drag events on this shape
-          });
-        });
+        // const bbox = group.getBBox();
+        // const anchorPoints = this.getAnchorPoints(cfg);
+        // anchorPoints.forEach((anchorPos, i) => {
+        //   group.addShape('circle', {
+        //     attrs: {
+        //       r: 5,
+        //       x: bbox.x + bbox.width * anchorPos[0],
+        //       y: bbox.y + bbox.height * anchorPos[1],
+        //       fill: '#fff',
+        //       stroke: '#5F95FF',
+        //     },
+        //     // must be assigned in G6 3.3 and later versions. it can be any string you want, but should be unique in a custom item type
+        //     name: `anchor-point`, // the name, for searching by group.find(ele => ele.get('name') === 'anchor-point')
+        //     anchorPointIdx: i, // flag the idx of the anchor-point circle
+        //     links: 0, // cache the number of edges connected to this shape
+        //     visible: false, // invisible by default, shows up when links > 1 or the node is in showAnchors state
+        //     draggable: true, // allow to catch the drag events on this shape
+        //   });
+        // });
       },
-      getAnchorPoints(cfg) {
-        return (
-          cfg.anchorPoints || [
-            [0, 0.5],
-            [0.33, 0],
-            [0.66, 0],
-            [1, 0.5],
-            [0.33, 1],
-            [0.66, 1],
-          ]
-        );
-      },
+
       // response the state changes and show/hide the link-point circles
-      setState(name, value, item) {
-        if (name === 'showAnchors') {
-          const anchorPoints = item
-            .getContainer()
-            .findAll((ele) => ele.get('name') === 'anchor-point');
-          anchorPoints.forEach((point) => {
-            if (value || point.get('links') > 0) point.show();
-            else point.hide();
-          });
-        }
-      },
+
       update(cfg, node) {
         const name = '★',
           textLength = measureText(name, '14px'),

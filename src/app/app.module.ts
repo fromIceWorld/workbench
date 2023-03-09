@@ -15,14 +15,15 @@ import { NzSwitchModule } from 'ng-zorro-antd/switch';
 import { NzTabsModule } from 'ng-zorro-antd/tabs';
 import { NzTagModule } from 'ng-zorro-antd/tag';
 import { ConfigTabComponent } from './config-tab/config-tab.component';
+import { EventBusService } from './event-bus.service';
 import { MenuTabComponent } from './menu-tab/menu-tab.component';
 import { ViewTabComponent } from './view-tab/view-tab.component';
 import { WorkbenchComponent } from './workbench/workbench.component';
 
 // 暴露出源组件class 创建web component的API
-export * from '../../../custom-elements-demo/dist/custom-elements-demo/main.js';
-export * from '../../../custom-elements-demo/dist/custom-elements-demo/polyfills.js';
-export * from '../../../custom-elements-demo/dist/custom-elements-demo/runtime.js';
+// export * from '../../../custom-elements-demo/dist/main.js';
+// export * from '../../../custom-elements-demo/dist/polyfills.js';
+// export * from '../../../custom-elements-demo/dist/runtime.js';
 @NgModule({
   declarations: [
     WorkbenchComponent,
@@ -47,7 +48,7 @@ export * from '../../../custom-elements-demo/dist/custom-elements-demo/runtime.j
     NzTabsModule,
     NzAlertModule,
   ],
-  providers: [],
+  providers: [{ provide: 'bus', useClass: EventBusService }],
   bootstrap: [WorkbenchComponent],
   entryComponents: [],
 })

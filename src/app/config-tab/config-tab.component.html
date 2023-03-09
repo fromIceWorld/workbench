@@ -1,10 +1,10 @@
 <div class="tab-container">
   <p>数据:</p>
-  <div *ngFor="let key of originKeys(config); index as i">
+  <div *ngFor="let key of originKeys(html); index as i">
     <span class="label">{{ key }}</span>
-    <span *ngIf="config[key].type === 'boolean'">
+    <span *ngIf="html[key].type === 'boolean'">
       <nz-switch
-        [(ngModel)]="config[key].value"
+        [(ngModel)]="html[key].value"
         [nzCheckedChildren]="checkedTemplate"
         [nzUnCheckedChildren]="unCheckedTemplate"
         (ngModelChange)="updateConfig($event)"
@@ -14,24 +14,24 @@
         ><i nz-icon nzType="close"></i
       ></ng-template>
     </span>
-    <span *ngIf="config[key].type === 'array'">
+    <span *ngIf="html[key].type === 'array'">
       <nz-select
-        [(ngModel)]="config[key].value"
+        [(ngModel)]="html[key].value"
         (ngModelChange)="updateConfig($event)"
       >
         <nz-option
-          *ngFor="let item of config[key].options"
+          *ngFor="let item of html[key].options"
           [nzValue]="item.value ? item.value : item"
           [nzLabel]="item.label ? item.label : item"
         ></nz-option>
       </nz-select>
     </span>
-    <span *ngIf="config[key].type === 'list'">
+    <span *ngIf="html[key].type === 'list'">
       <nz-tag
-        *ngFor="let tag of config[key].options; let i = index"
-        [nzMode]="config[key].value === tag ? 'default' : 'closeable'"
-        (click)="checkTag(tag, config[key])"
-        (nzOnClose)="handleClose(tag, config[key], 'options')"
+        *ngFor="let tag of html[key].options; let i = index"
+        [nzMode]="html[key].value === tag ? 'default' : 'closeable'"
+        (click)="checkTag(tag, html[key])"
+        (nzOnClose)="handleClose(tag, html[key], 'options')"
       >
         {{ sliceTagName(tag) }}
       </nz-tag>
@@ -52,17 +52,18 @@
         type="text"
         [(ngModel)]="inputValue"
         style="width: 78px"
-        (blur)="handleInputConfirm(config[key], 'options')"
-        (keydown.enter)="handleInputConfirm(config[key], 'options')"
+        (blur)="handleInputConfirm(html[key], 'options')"
+        (keydown.enter)="handleInputConfirm(html[key], 'options')"
       />
     </span>
-    <span *ngIf="config[key].type === 'string'">
+    <span *ngIf="html[key].type === 'string'">
       <nz-input-group [nzSuffix]="inputClearTpl">
         <input
           type="text"
           nz-input
-          [(ngModel)]="config[key].value"
-          (blur)="updateConfig($event)"
+          [(ngModel)]="html[key].value"
+          (focus)="updateFocus($event)"
+          (blur)="updateBlur($event)"
         />
       </nz-input-group>
       <ng-template #inputClearTpl
@@ -71,18 +72,106 @@
           class="ant-input-clear-icon"
           nzTheme="fill"
           nzType="close-circle"
-          *ngIf="config[key].value"
-          (click)="config[key].value = ''"
+          *ngIf="html[key].value"
+          (click)="html[key].value = ''"
         ></i
       ></ng-template>
     </span>
-    <span *ngIf="config[key].type === 'number'">
+    <span *ngIf="html[key].type === 'number'">
       <nz-input-number
-        [(ngModel)]="config[key].value"
+        [(ngModel)]="html[key].value"
         [nzMin]="1"
         [nzStep]="1"
         (nzBlur)="updateConfig($event)"
       ></nz-input-number>
+    </span>
+  </div>
+  <p>样式</p>
+  <div *ngFor="let key of originKeys(css); index as i">
+    <span class="label">{{ key }}</span>
+    <span *ngIf="css[key].type === 'boolean'">
+      <nz-switch
+        [(ngModel)]="css[key].value"
+        [nzCheckedChildren]="checkedTemplate"
+        [nzUnCheckedChildren]="unCheckedTemplate"
+        (ngModelChange)="updateConfig($event)"
+      ></nz-switch>
+      <ng-template #checkedTemplate><i nz-icon nzType="check"></i></ng-template>
+      <ng-template #unCheckedTemplate
+        ><i nz-icon nzType="close"></i
+      ></ng-template>
+    </span>
+    <span *ngIf="css[key].type === 'array'">
+      <nz-select
+        [(ngModel)]="css[key].value"
+        (ngModelChange)="updateConfig($event)"
+      >
+        <nz-option
+          *ngFor="let item of css[key].options"
+          [nzValue]="item.value ? item.value : item"
+          [nzLabel]="item.label ? item.label : item"
+        ></nz-option>
+      </nz-select>
+    </span>
+    <span *ngIf="css[key].type === 'list'">
+      <nz-tag
+        *ngFor="let tag of css[key].options; let i = index"
+        [nzMode]="css[key].value === tag ? 'default' : 'closeable'"
+        (click)="checkTag(tag, css[key])"
+        (nzOnClose)="handleClose(tag, css[key], 'options')"
+      >
+        {{ sliceTagName(tag) }}
+      </nz-tag>
+      <nz-tag
+        *ngIf="!inputVisible"
+        class="editable-tag"
+        nzNoAnimation
+        (click)="showInput()"
+      >
+        <i nz-icon nzType="plus"></i>
+        New Tag
+      </nz-tag>
+      <input
+        #inputElement
+        nz-input
+        nzSize="small"
+        *ngIf="inputVisible"
+        type="text"
+        [(ngModel)]="inputValue"
+        style="width: 78px"
+        (blur)="handleInputConfirm(css[key], 'options')"
+        (keydown.enter)="handleInputConfirm(css[key], 'options')"
+      />
+    </span>
+    <span *ngIf="css[key].type === 'string'">
+      <nz-input-group [nzSuffix]="inputClearTpl">
+        <input
+          type="text"
+          nz-input
+          [(ngModel)]="css[key].value"
+          (focus)="updateFocus($event)"
+          (blur)="updateBlur($event)"
+        />
+      </nz-input-group>
+      <ng-template #inputClearTpl
+        ><i
+          nz-icon
+          class="ant-input-clear-icon"
+          nzTheme="fill"
+          nzType="close-circle"
+          *ngIf="css[key].value"
+          (click)="css[key].value = ''"
+        ></i
+      ></ng-template>
+    </span>
+    <span *ngIf="css[key].type === 'number'">
+      <nz-input-number
+        [(ngModel)]="css[key].value"
+        [nzMin]="1"
+        [nzStep]="1"
+        (nzBlur)="updateConfig($event)"
+      ></nz-input-number>
+      {{ css[key].postfix }}
     </span>
   </div>
   <p>布局:</p>
