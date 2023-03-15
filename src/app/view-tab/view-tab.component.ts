@@ -696,7 +696,14 @@ export class ViewTabComponent implements OnInit {
       scriptString = '',
       { area, filesName } = combo._cfg.model,
       { html, css, component, className } = combo._cfg.model.config,
-      { nodes, combos } = combo.getChildren();
+      // { nodes, combos } = combo.getChildren();
+      { nodes: allNodes, combos: allCombos } = combo.getChildren();
+    let nodes = allNodes.filter(
+        (node) => node._cfg.model.comboId == combo._cfg.id
+      ),
+      combos = allCombos.filter(
+        (com) => com._cfg.model.parentId == combo._cfg.id
+      );
     // 保存组件的源文件
     filesName.forEach((file) => {
       this.originFile.add(area + '/' + file);
@@ -711,7 +718,7 @@ export class ViewTabComponent implements OnInit {
       className,
     });
     const [origin, start, end] = s.match(
-      /^(\<[a-z-0-9 ="';:#.]+\>[\s\S]*)(\<\/([a-z-0-9]+)\>)$/
+      /^(\<[a-z-0-9 ="';:#.%]+\>[\s\S]*)(\<\/([a-z-0-9]+)\>)$/
     );
     htmlString += start;
     scriptString += js;

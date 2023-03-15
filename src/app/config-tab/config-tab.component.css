@@ -7,7 +7,7 @@ nz-select {
   font-size: 12px;
   color: #ff0000ba;
   font-weight: 700;
-  width: 76px;
+  width: 100px;
   text-align: right;
   margin-right: 4px;
 }
@@ -21,7 +21,7 @@ p {
   margin: 30px px 0 8px;
 }
 .tab-container {
-  width: 220px;
+  width: 240px;
 }
 [ng-reflect-nz-mode="default"] {
   background-color: #1890ff;
