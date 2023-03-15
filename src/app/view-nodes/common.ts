@@ -1,20 +1,21 @@
-import G6 from '../../../g6.min.js';
-let count = 0;
-// 独属于每一个节点的render函数，在G6中会被抹除，通过原型保存
+import G6 from '../../../g6.min.js'; // 独属于每一个节点的render函数，在G6中会被抹除，通过原型保存
 function registerCommon() {
   G6.registerNode(
     'common',
     {
       drawShape: function drawShape(cfg, group) {
-        const { img } = cfg;
+        const { img, x, y } = cfg;
+        let offsetX = x - 20,
+          offsetY = y - 20;
         const style = this.getShapeStyle(cfg);
-
+        console.log('cfg', cfg, style);
         group.addShape('image', {
           attrs: {
+            // ...style,
             width: img.width,
             height: img.height,
-            x: -img.width / 2,
-            y: -img.height / 2,
+            x: 0,
+            y: 0,
             // DOM's html
             img: `
              ${img.base}
@@ -29,8 +30,11 @@ function registerCommon() {
         const rect = group.addShape('rect', {
           attrs: {
             ...style,
-            x: -img.width / 2,
-            y: -img.height / 2,
+            x: 0,
+            y: 0,
+            // x: x + 20,
+            // x: x - img.width / 2,
+            // y: y - img.height / 2,
             stroke: '#fff0',
             fill: '#fff0',
             width: img.width,
@@ -40,6 +44,8 @@ function registerCommon() {
           name: 'container', // 在 G6 3.3 及之后的版本中，必须指定 name，可以是任意字符串，但需要在同一个自定义元素类型中保持唯一性
           zIndex: 100,
         });
+        // console.log(rect.getModel());
+
         // renderTable(cfg, group, false, null);
         return rect;
       },
@@ -62,7 +68,6 @@ function registerCommon() {
           });
           img.attr('img', canvas.toDataURL('img'));
         });
-        console.log();
       },
     },
     'rect'

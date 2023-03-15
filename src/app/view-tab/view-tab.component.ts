@@ -11,6 +11,7 @@ import { ralationMenu } from '../node-menu/relation-menu.js';
 import { enumArrow } from '../view-edges/index.js';
 import {
   registerAPI,
+  registerBlock,
   registerButton,
   registerCommon,
   registerContainer,
@@ -171,6 +172,7 @@ export class ViewTabComponent implements OnInit {
   scaleY;
   @ViewChild('dialog')
   dialog;
+  originFile = new Set();
   isVisible: boolean = false;
   eventName: string = '';
   methodName: string = '';
@@ -181,7 +183,9 @@ export class ViewTabComponent implements OnInit {
   dragTarget: EventTarget | null = null;
   data = {
     nodes: [],
-    combos: [],
+    combos: [
+      // { type: 'block', width: 200, height: 200, x: 50, y: 50, id: '123' },
+    ],
   };
   scaleXdata = {
     nodes: [{ id: '1', type: 'scaleX', x: 0, y: 0 }],
@@ -240,6 +244,7 @@ export class ViewTabComponent implements OnInit {
   registerNodes() {
     registerButton();
     registerTable();
+    registerBlock();
     registerContainer();
     registerDialog();
     registerInput();
@@ -302,13 +307,16 @@ export class ViewTabComponent implements OnInit {
           };
         }),
         edges: this.relationshipGraph.getEdges().map((edge) => {
-          const { id, label, source, target, type } = edge._cfg.model;
+          debugger;
+          const { id, label, source, target, edgeType, style } =
+            edge._cfg.model;
           return {
             id,
             label,
             source,
             target,
-            type,
+            edgeType,
+            style,
           };
         }),
       },
@@ -331,6 +339,8 @@ export class ViewTabComponent implements OnInit {
     // 节点数据
     const nodes = this.graph.getNodes(),
       combos = this.graph.getCombos();
+    console.log(nodes, combos);
+    this.originFile.clear();
     // 获取第一层节点
     let topNodes = nodes.filter((node) => !node._cfg.model.comboId);
     let topCombos = combos.filter((combo) => !combo._cfg.model.parentId);
@@ -364,51 +374,50 @@ export class ViewTabComponent implements OnInit {
         edgeType,
       };
     });
+    let jsString = ``;
     edges
       .map((edge) => {
         const { source, target, label, edgeType } = edge;
-        let jsString = ``;
         // 不同的关系连线，逻辑不同
         if (edgeType === LineType.event) {
           let [event, fn] = label.split('->');
-          jsString = `
-                  //初始化事件
-                  (()=>{
-                    const sourceDOM = document.querySelector('${this.idMapTag.get(
-                      source.split('-')[1]
+          jsString += `
+            (()=>{
+                const sourceDOM = document.querySelector('${this.idMapTag.get(
+                  source.split('-')[1]
+                )}'),
+                    targetDOM = document.querySelector('${this.idMapTag.get(
+                      target.split('-')[1]
                     )}'),
-                        targetDOM = document.querySelector('${this.idMapTag.get(
-                          target.split('-')[1]
-                        )}'),
-                        targetPath = (targetDOM.getAttribute('pre')||'').split('.');
-                    let targetIns = targetPath.reduce((pre,key)=>pre[key],targetDOM);
-                    sourceDOM.addEventListener('${event}', (e)=>{
-                      targetIns['${fn}']();
-                    })
-                  })();  
+                    targetPath = (targetDOM.getAttribute('pre')||'').split('.');
+                let targetIns = targetPath.reduce((pre,key)=>pre[key],targetDOM);
+                sourceDOM.addEventListener('${event}', (e)=>{
+                  targetIns['${fn}']();
+                });
+            })();
               `;
         } else if (edgeType === LineType.data) {
           let [hook, sourceData, targetData] = label.split(/[ =]/);
-          jsString = `
-          (()=>{
-            const sourceDOM = document.querySelector('${this.idMapTag.get(
-              source.split('-')[1]
-            )}'),
-                  targetDOM = document.querySelector('${this.idMapTag.get(
-                    target.split('-')[1]
-                  )}'),
-                  sourcePath = (sourceDOM.getAttribute('pre')||'').split('.'),
-                  targetPath = (targetDOM.getAttribute('pre')||'').split('.');
-            let sourceIns = sourcePath.reduce((pre,key)=>pre[key],sourceDOM),
-                targetIns = targetPath.reduce((pre,key)=>pre[key],targetDOM);      
-            sourceDOM.addEventListener('${hook}',()=>{
-              targetIns['${targetData}'] = sourceIns['${sourceData}'];
-            })
-          })();
+          jsString += `
+            (()=>{
+              const sourceDOM = document.querySelector('${this.idMapTag.get(
+                source.split('-')[1]
+              )}'),
+                    targetDOM = document.querySelector('${this.idMapTag.get(
+                      target.split('-')[1]
+                    )}'),
+                    sourcePath = (sourceDOM.getAttribute('pre')||'').split('.'),
+                    targetPath = (targetDOM.getAttribute('pre')||'').split('.');
+              let sourceIns = sourcePath.reduce((pre,key)=>pre[key],sourceDOM),
+                  targetIns = targetPath.reduce((pre,key)=>pre[key],targetDOM);      
+              sourceDOM.addEventListener('${hook}',()=>{
+                targetIns['${targetData}'] = sourceIns['${sourceData}'];
+              })
+            })();
           `;
         } else if (edgeType === LineType.params) {
           let [data, fn] = label.split('=>');
-          jsString = `
+          jsString += `
           (()=>{
             const sourceDOM = document.querySelector('${this.idMapTag.get(
               source.split('-')[1]
@@ -423,13 +432,46 @@ export class ViewTabComponent implements OnInit {
             if(!targetIns['${fn}'].params){
               targetIns['${fn}'].params = []
             }
-            targetIns['${fn}'].params.push([sourceIns,${data}])
-          })();
+            targetIns['${fn}'].params.push([sourceIns,${data}]);
+          })();  
           `;
         }
-        js += jsString;
       })
       .join();
+    // 插入base
+    let scriptString = ``,
+      cssString = ``;
+    [
+      'store/base/styles.js',
+      'store/base/runtime.js',
+      'store/base/polyfills.js',
+      'store/base/main.js',
+      'store/base/vendor.js',
+    ]
+      // Array.from(this.originFile)
+      .forEach((file: string) => {
+        if (file.endsWith('.js')) {
+          scriptString += `<script src="http://localhost:3000/${file}" defer></script>`;
+        } else if (file.endsWith('.css')) {
+          cssString += `<link rel="stylesheet" href="http://localhost:3000/${file}"/>`;
+        }
+      });
+    let customElementScript = `
+    customElements.define('my-component',
+      class MyComponent extends HTMLElement{
+        template = \`${html}\`;
+        constructor(){
+          super();
+          this.innerHTML = this.template;
+        }
+      }
+    );
+    ${js};
+    ${jsString};
+    `;
+
+    console.log(customElementScript);
+    // return;
     // 下载 html文件
     let string = `
     <!DOCTYPE html>
@@ -439,30 +481,39 @@ export class ViewTabComponent implements OnInit {
             <title>展示区</title>
             <base href="./" />
             <meta name="viewport" content="width=device-width, initial-scale=1" />
-            <link rel="icon" type="image/x-icon" href="favicon.ico" />
-            <script src="https://fromiceworld.github.io/web-component-zorro-Angular/runtime.js"></script>
-            <script src="https://fromiceworld.github.io/web-component-zorro-Angular/polyfills.js"></script>
-            <script src="https://fromiceworld.github.io/web-component-zorro-Angular/main.js"></script>
-            <link rel="stylesheet" href="https://fromiceworld.github.io/web-component-zorro-Angular/styles.css"/>
+            ${scriptString}
+            ${cssString}
+            <script src="./logic.js" defer></script>
         </head>
         <body>
-          ${html}
+          <my-component></my-component>
         </body>
-        <script>
-          ${js}
-        </script>
+       
     </html>
     `;
-    const blob = new Blob([string], { type: 'text/html' });
+    // 下载 index.html 和业务逻辑 script
+    const htmlBlob = new Blob([string], { type: 'text/html' });
     const a = document.createElement('a'),
-      href = URL.createObjectURL(blob);
+      href = URL.createObjectURL(htmlBlob);
     a.href = href;
     let hash = new Date();
-    a.download = 'test.html';
+    a.download = 'index.html';
+    document.body.appendChild(a);
+    a.click();
+    // 下载logic.js
+    const logicBlob = new Blob([customElementScript], {
+        type: 'application/ecmascript',
+      }),
+      jsHref = URL.createObjectURL(logicBlob);
+    a.href = jsHref;
+    a.download = 'logic.js';
     document.body.appendChild(a);
     a.click();
     a.remove();
     URL.revokeObjectURL(href);
+    console.log('组件源文件', this.originFile);
+    console.log('html', html);
+    console.log('js', js);
   }
   absoluteLayout() {
     let styles = [];
@@ -643,8 +694,13 @@ export class ViewTabComponent implements OnInit {
   exportCombo(combo) {
     let htmlString = '',
       scriptString = '',
+      { area, filesName } = combo._cfg.model,
       { html, css, component, className } = combo._cfg.model.config,
       { nodes, combos } = combo.getChildren();
+    // 保存组件的源文件
+    filesName.forEach((file) => {
+      this.originFile.add(area + '/' + file);
+    });
     // 建立 node id与tagName的映射
     const originClass = window[className];
 
@@ -680,6 +736,11 @@ export class ViewTabComponent implements OnInit {
   }
   // 导出节点数据
   exportNode(node) {
+    const { area, filesName } = node._cfg.model;
+    // 保存组件的源文件
+    filesName.forEach((file) => {
+      this.originFile.add(area + '/' + file);
+    });
     let { html, css, className } = node._cfg.model.config;
     const originClass = window[className],
       index = (originClass as any).index;
@@ -888,6 +949,7 @@ export class ViewTabComponent implements OnInit {
         container: 'design-view',
         width,
         height,
+        groupByTypes: false,
         modes: {
           default: ['drag-node', 'drag-combo'],
         },
@@ -1183,7 +1245,6 @@ export class ViewTabComponent implements OnInit {
       'drop',
       function (event) {
         if ((event.target as HTMLElement).tagName === 'CANVAS') {
-          debugger;
           let { offsetX, offsetY } = event,
             { id } = that.dragTarget as HTMLElement,
             view = (that.dragTarget as any).view,
@@ -1191,7 +1252,9 @@ export class ViewTabComponent implements OnInit {
             targetX = offsetX,
             targetY = offsetY,
             targetType = (that.dragTarget as any).comonentType,
-            component = (that.dragTarget as any).component;
+            component = (that.dragTarget as any).component,
+            area = (that.dragTarget as any).area,
+            filesName = (that.dragTarget as any).filesName;
           console.log(component);
           // 阻止默认动作（如打开一些元素的链接）
           event.preventDefault();
@@ -1206,6 +1269,8 @@ export class ViewTabComponent implements OnInit {
             x: targetX,
             y: targetY,
             config: nodeSetting,
+            area,
+            filesName,
           };
           //
           if (targetType === 'node') {

@@ -12,6 +12,7 @@ import { NzModalModule } from 'ng-zorro-antd/modal';
 import { NzRadioModule } from 'ng-zorro-antd/radio';
 import { NzSelectModule } from 'ng-zorro-antd/select';
 import { NzSwitchModule } from 'ng-zorro-antd/switch';
+import { NzTableModule } from 'ng-zorro-antd/table';
 import { NzTabsModule } from 'ng-zorro-antd/tabs';
 import { NzTagModule } from 'ng-zorro-antd/tag';
 import { ConfigTabComponent } from './config-tab/config-tab.component';
@@ -47,6 +48,7 @@ import { WorkbenchComponent } from './workbench/workbench.component';
     NzInputNumberModule,
     NzTabsModule,
     NzAlertModule,
+    NzTableModule,
   ],
   providers: [{ provide: 'bus', useClass: EventBusService }],
   bootstrap: [WorkbenchComponent],
