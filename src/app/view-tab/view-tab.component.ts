@@ -767,6 +767,7 @@ export class ViewTabComponent implements OnInit {
       console.log(elements);
       let sortKey = layout == 'row' ? 'x' : 'y';
       elements.sort((a, b) => a._cfg.model[sortKey] - b._cfg.model[sortKey]);
+      debugger;
       if (layout == 'row') {
         // 修改combo layout json
         this.focusCombo._cfg.model.config.css.style['flex-direction'] = 'row';
