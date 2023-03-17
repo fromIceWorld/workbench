@@ -699,7 +699,7 @@ export class ViewTabComponent implements OnInit {
       // { nodes, combos } = combo.getChildren();
       { nodes: allNodes, combos: allCombos } = combo.getChildren();
     let nodes = allNodes.filter(
-        (node) => node._cfg.model.comboId == combo._cfg.id
+        (node) => !node.destroyed && node._cfg.model.comboId == combo._cfg.id
       ),
       combos = allCombos.filter(
         (com) => com._cfg.model.parentId == combo._cfg.id
@@ -769,75 +769,113 @@ export class ViewTabComponent implements OnInit {
     if (this.focusCombo) {
       const { nodes, combos } = this.focusCombo.getChildren(),
         { minX, minY } = this.focusCombo._cfg.bbox,
+        padding = this.focusCombo._cfg.model.padding,
         elements = nodes.concat(combos);
       // 根据 x轴，y轴 排序
       console.log(elements);
       let sortKey = layout == 'row' ? 'x' : 'y';
       elements.sort((a, b) => a._cfg.model[sortKey] - b._cfg.model[sortKey]);
-      debugger;
       if (layout == 'row') {
         // 修改combo layout json
         this.focusCombo._cfg.model.config.css.style['flex-direction'] = 'row';
-        elements.reduce((pre, element) => {
-          const { bboxCanvasCache, model, type } = element._cfg,
-            { x } = model,
-            { width, centerY, minX, minY: minYY } = bboxCanvasCache;
-          if (type == 'combo') {
-            this.updateComboPosition(
-              element,
-              x - minX + pre,
-              minY + centerY - minYY
-            );
-            // 更改comco layout 配置
-            return pre + width;
+        if (elements.length == 0) {
+          return;
+        }
+        elements.reduce((pre: any, element, index) => {
+          const { bboxCanvasCache, type, model } = element._cfg;
+          const { x, y } = model;
+          let width = bboxCanvasCache.width;
+          if (index == 0) {
+            return {
+              nextX: x + width,
+              nextY: y,
+            };
           } else {
-            element.updatePosition({
-              x: x - minX + pre,
-              y: minY + centerY - minYY,
-            });
-            return pre + width;
+            const { nextX, nextY } = pre;
+            return this.deepUpdatePosition(element, nextX, nextY, 'width');
           }
-        }, minX);
+        }, {});
       } else {
         // 修改combo layout json
         this.focusCombo._cfg.model.config.css.style['flex-direction'] =
           'column';
-        elements.reduce((pre: number, element) => {
-          const { bboxCanvasCache, model, type } = element._cfg,
-            { x } = model,
-            {
-              width,
-              height,
-              centerY,
-              minY: minYY,
-              minX: minXX,
-            } = bboxCanvasCache;
-          if (type == 'combo') {
-            this.updateComboPosition(
-              element,
-              minX + x - minXX,
-              pre + centerY - minYY
-            );
-            return pre + height;
+        if (elements.length == 0) {
+          return;
+        }
+        debugger;
+        elements.reduce((pre: any, element, index) => {
+          const { bboxCanvasCache, type, model } = element._cfg;
+          const { x, y } = model;
+          let height = bboxCanvasCache.height;
+          height = bboxCanvasCache.height;
+          if (index == 0) {
+            return {
+              nextX: x,
+              nextY: y + height,
+            };
           } else {
-            element.updatePosition({
-              x: minX + x - minXX,
-              y: pre + centerY - minYY,
-            });
-            return pre + height;
+            const { nextX, nextY } = pre;
+            return this.deepUpdatePosition(element, nextX, nextY, 'height');
           }
-        }, minY);
+        }, {});
       }
       this.graph.updateCombos();
     }
   }
+  deepUpdatePosition(target, offsetX, offsetY, attr) {
+    const { bboxCanvasCache, type } = target._cfg;
+    let attValue = bboxCanvasCache[attr];
+    if (type == 'node') {
+      target.updatePosition({
+        x: offsetX,
+        y: offsetY,
+      });
+    } else if (type == 'combo') {
+      this.deepUpdateCombo(target, offsetX, offsetY, attr);
+    }
+    return {
+      nextX: offsetX + (attr == 'width' ? attValue : 0),
+      nextY: offsetY + (attr == 'height' ? attValue : 0),
+    };
+  }
+  deepUpdateCombo(target, originX, originY, attr) {
+    const { model, bboxCanvasCache } = target._cfg;
+    const { padding } = model;
+    const { x, y } = model;
+    let { nodes, combos } = target.getChildren();
+    if (nodes.length == 0 && combos.length == 0) {
+      console.log(target);
+      this.updateComboPosition(
+        target,
+        originX + padding[3],
+        originY + padding[0]
+      );
+      return;
+    }
+    [...nodes, ...combos].forEach((item) => {
+      const { type } = item._cfg;
+      if (type == 'node') {
+        this.deepUpdatePosition(
+          item,
+          originX + padding[3],
+          originY + padding[0],
+          attr
+        );
+      } else {
+        this.deepUpdateCombo(
+          item,
+          originX + padding[3],
+          originY + padding[0],
+          attr
+        );
+      }
+    });
+  }
   // combo 是自适应子节点的，updatePosition时，无法直接操作，需要更改子node
   updateComboPosition(combo: any, targetX: number, targetY: number) {
-    const { bboxCanvasCache, model, type } = combo._cfg,
-      { minX, minY } = bboxCanvasCache,
-      { x: xx, y: yy } = model,
-      { nodes, combos } = combo.getChildren();
-    if (!nodes.length && !combos.length) {
+    const { nodes, combos } = combo.getChildren();
+    if (nodes.length == 0 && combos.length == 0) {
+      debugger;
       combo.updatePosition({
         x: targetX,
         y: targetY,
@@ -845,15 +883,14 @@ export class ViewTabComponent implements OnInit {
       return;
     }
     nodes.concat(combos).forEach((item: any) => {
-      const { type, model } = item._cfg,
-        { x, y, minX: minXX, minY: minYY } = model;
+      const { type } = item._cfg;
       if (type == 'node') {
         item.updatePosition({
-          x: targetX + x - xx,
-          y: targetY + y - yy,
+          x: targetX - 10,
+          y: targetY,
         });
       } else if (type == 'combo') {
-        this.updateComboPosition(item, targetX + x - xx, targetY + y - yy);
+        this.updateComboPosition(item, targetX, targetY);
       }
     });
   }

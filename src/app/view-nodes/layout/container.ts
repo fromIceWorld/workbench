@@ -137,6 +137,7 @@ function registerContainer() {
             ...defaultConfig,
             x: 0,
             y: 0,
+            label: '',
             width: width + padding[1] + padding[3],
             height: height + padding[0] + padding[2],
           },
@@ -174,7 +175,7 @@ function registerContainer() {
           heightValue = cssConfig['height'].value;
         let width = 0,
           height = 0;
-        if (/%/.test(widthValue)) {
+        if (/%$/.test(widthValue)) {
           width =
             (1920 * Number(widthValue.slice(0, widthValue.length - 1))) / 100;
         } else if (/px$/.test(widthValue)) {
@@ -195,6 +196,9 @@ function registerContainer() {
           containerMinY = Infinity,
           containerMaxY = -Infinity;
         [...nodes, ...combos].forEach((item) => {
+          if (item.destroyed) {
+            return;
+          }
           let {
             containerMaxX: maxX,
             containerMinX: minX,
@@ -212,11 +216,12 @@ function registerContainer() {
           // 但在combo中 x,y有一定的偏移 bboxCanvasCache中的x,y才是左上角坐标
           let x, y;
           if (combo._cfg.bboxCanvasCache) {
-            x = combo._cfg.bboxCanvasCache.x;
-            y = combo._cfg.bboxCanvasCache.y;
+            debugger;
+            x = combo._cfg.bboxCanvasCache.x + padding[3];
+            y = combo._cfg.bboxCanvasCache.y + padding[0];
           } else {
-            x = cfg.x;
-            y = cfg.y;
+            x = cfg.x + padding[3];
+            y = cfg.y + padding[0];
           }
           // const { x, y } = cfg;
           // 当没有子元素时，最小的x,y 就是自身属性
@@ -231,13 +236,15 @@ function registerContainer() {
           containerMaxX =
             containerMinX +
             Math.max(containerMaxX - containerMinX, width) +
-            padding[1];
+            padding[1] +
+            padding[3];
           containerMaxY =
             containerMinY +
             Math.max(containerMaxY - containerMinY, height) +
-            padding[2];
-          containerMinX -= padding[3];
-          containerMinY -= padding[0];
+            padding[2] +
+            padding[0];
+          // containerMinX -= padding[3];
+          // containerMinY -= padding[0];
         }
         container.attr({
           ...style,
@@ -245,6 +252,11 @@ function registerContainer() {
           width: containerMaxX - containerMinX,
           height: containerMaxY - containerMinY,
         });
+        console.log('combo', combo);
+        // combo.updatePosition({
+        //   x: containerMinX + (containerMaxX - containerMinX) / 2 - padding[3],
+        //   y: containerMinY + (containerMaxY - containerMinY) / 2 - padding[0],
+        // });
       },
     },
     'rect'

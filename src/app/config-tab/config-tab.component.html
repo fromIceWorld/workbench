@@ -174,20 +174,28 @@
       {{ css[key].postfix }}
     </span>
   </div>
-  <p>布局:</p>
   <div>
-    <i
-      nz-icon
-      nzType="split-cells"
-      nzTheme="outline"
-      (click)="changeFlex($event, 'row')"
-    ></i>
-    <i
-      nz-icon
-      nzType="column-height"
-      nzTheme="outline"
-      (click)="changeFlex($event, 'col')"
-      style="cursor: pointer"
-    ></i>
+    <p>布局:</p>
+    <div *ngIf="css['style']">
+      <i
+        nz-icon
+        nzType="split-cells"
+        nzTheme="outline"
+        [ngStyle]="{
+          color: css['style']['flex-direction'] == 'row' ? 'red' : '#252525'
+        }"
+        (click)="changeFlex($event, 'row')"
+      ></i>
+      <i
+        nz-icon
+        nzType="column-height"
+        nzTheme="outline"
+        [ngStyle]="{
+          color: css['style']['flex-direction'] == 'column' ? 'red' : '#252525'
+        }"
+        (click)="changeFlex($event, 'col')"
+        style="cursor: pointer"
+      ></i>
+    </div>
   </div>
 </div>
