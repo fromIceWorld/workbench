@@ -17,6 +17,15 @@ const PROXY_CONFIG = [
     //   "^/center": "/",
     // },
   },
+  {
+    context: ["/vue"],
+    target: "http://localhost:3000 ",
+    secure: false,
+    changeOrigin: false,
+    // pathRewrite: {
+    //   "^/center": "/",
+    // },
+  },
 ];
 
 module.exports = PROXY_CONFIG;

@@ -216,7 +216,6 @@ function registerContainer() {
           // 但在combo中 x,y有一定的偏移 bboxCanvasCache中的x,y才是左上角坐标
           let x, y;
           if (combo._cfg.bboxCanvasCache) {
-            debugger;
             x = combo._cfg.bboxCanvasCache.x + padding[3];
             y = combo._cfg.bboxCanvasCache.y + padding[0];
           } else {
@@ -252,7 +251,6 @@ function registerContainer() {
           width: containerMaxX - containerMinX,
           height: containerMaxY - containerMinY,
         });
-        console.log('combo', combo);
         // combo.updatePosition({
         //   x: containerMinX + (containerMaxX - containerMinX) / 2 - padding[3],
         //   y: containerMinY + (containerMaxY - containerMinY) / 2 - padding[0],

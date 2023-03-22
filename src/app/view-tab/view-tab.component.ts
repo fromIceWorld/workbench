@@ -172,7 +172,7 @@ export class ViewTabComponent implements OnInit {
   scaleY;
   @ViewChild('dialog')
   dialog;
-  originFile = new Set();
+  originFile = new Map();
   isVisible: boolean = false;
   eventName: string = '';
   methodName: string = '';
@@ -307,7 +307,6 @@ export class ViewTabComponent implements OnInit {
           };
         }),
         edges: this.relationshipGraph.getEdges().map((edge) => {
-          debugger;
           const { id, label, source, target, edgeType, style } =
             edge._cfg.model;
           return {
@@ -389,7 +388,7 @@ export class ViewTabComponent implements OnInit {
                     targetDOM = document.querySelector('${this.idMapTag.get(
                       target.split('-')[1]
                     )}'),
-                    targetPath = (targetDOM.getAttribute('pre')||'').split('.');
+                    targetPath = (targetDOM.getAttribute('_methods')||'').split('.');
                 let targetIns = targetPath.reduce((pre,key)=>pre[key],targetDOM);
                 sourceDOM.addEventListener('${event}', (e)=>{
                   targetIns['${fn}']();
@@ -406,8 +405,8 @@ export class ViewTabComponent implements OnInit {
                     targetDOM = document.querySelector('${this.idMapTag.get(
                       target.split('-')[1]
                     )}'),
-                    sourcePath = (sourceDOM.getAttribute('pre')||'').split('.'),
-                    targetPath = (targetDOM.getAttribute('pre')||'').split('.');
+                    sourcePath = (sourceDOM.getAttribute('_data')||'').split('.'),
+                    targetPath = (targetDOM.getAttribute('_data')||'').split('.');
               let sourceIns = sourcePath.reduce((pre,key)=>pre[key],sourceDOM),
                   targetIns = targetPath.reduce((pre,key)=>pre[key],targetDOM);      
               sourceDOM.addEventListener('${hook}',()=>{
@@ -425,8 +424,8 @@ export class ViewTabComponent implements OnInit {
                   targetDOM = document.querySelector('${this.idMapTag.get(
                     target.split('-')[1]
                   )}'),
-                  sourcePath = (sourceDOM.getAttribute('pre')||'').split('.'),
-                  targetPath = (targetDOM.getAttribute('pre')||'').split('.');
+                  sourcePath = (sourceDOM.getAttribute('_data')||'').split('.'),
+                  targetPath = (targetDOM.getAttribute('_methods')||'').split('.');
             let sourceIns = sourcePath.reduce((pre,key)=>pre[key],sourceDOM),
                 targetIns = targetPath.reduce((pre,key)=>pre[key],targetDOM);   
             if(!targetIns['${fn}'].params){
@@ -441,21 +440,26 @@ export class ViewTabComponent implements OnInit {
     // 插入base
     let scriptString = ``,
       cssString = ``;
-    [
-      'store/base/styles.js',
-      'store/base/runtime.js',
-      'store/base/polyfills.js',
-      'store/base/main.js',
-      'store/base/vendor.js',
-    ]
-      // Array.from(this.originFile)
-      .forEach((file: string) => {
-        if (file.endsWith('.js')) {
-          scriptString += `<script src="http://localhost:3000/${file}" defer></script>`;
-        } else if (file.endsWith('.css')) {
-          cssString += `<link rel="stylesheet" href="http://localhost:3000/${file}"/>`;
-        }
-      });
+    console.log(this.originFile);
+    Array.from(this.originFile.entries()).forEach((file: any) => {
+      const [name, decorator] = file;
+      console.log(file);
+      if (name.endsWith('.js')) {
+        scriptString += `<script src="http://localhost:3000/${name}"`;
+        Object.entries(decorator).forEach((config) => {
+          let [key, value] = config;
+          let type = typeof value;
+          if (type == 'string') {
+            scriptString += ` ${key}=${value}`;
+          } else if (type == 'boolean') {
+            scriptString += ` ${key}`;
+          }
+        });
+        scriptString += `></script>`;
+      } else if (name.endsWith('.css')) {
+        cssString += `<link rel="stylesheet" href="http://localhost:3000/${name}"/>`;
+      }
+    });
     let customElementScript = `
     customElements.define('my-component',
       class MyComponent extends HTMLElement{
@@ -706,7 +710,9 @@ export class ViewTabComponent implements OnInit {
       );
     // 保存组件的源文件
     filesName.forEach((file) => {
-      this.originFile.add(area + '/' + file);
+      let { decorator, name } =
+        typeof file == 'string' ? { name: file, decorator: {} } : file;
+      this.originFile.set(area + '/' + name, decorator);
     });
     // 建立 node id与tagName的映射
     const originClass = window[className];
@@ -746,7 +752,9 @@ export class ViewTabComponent implements OnInit {
     const { area, filesName } = node._cfg.model;
     // 保存组件的源文件
     filesName.forEach((file) => {
-      this.originFile.add(area + '/' + file);
+      let { decorator, name } =
+        typeof file == 'string' ? { name: file, decorator: {} } : file;
+      this.originFile.set(area + '/' + name, decorator);
     });
     let { html, css, className } = node._cfg.model.config;
     const originClass = window[className],
@@ -802,7 +810,6 @@ export class ViewTabComponent implements OnInit {
         if (elements.length == 0) {
           return;
         }
-        debugger;
         elements.reduce((pre: any, element, index) => {
           const { bboxCanvasCache, type, model } = element._cfg;
           const { x, y } = model;
@@ -875,7 +882,6 @@ export class ViewTabComponent implements OnInit {
   updateComboPosition(combo: any, targetX: number, targetY: number) {
     const { nodes, combos } = combo.getChildren();
     if (nodes.length == 0 && combos.length == 0) {
-      debugger;
       combo.updatePosition({
         x: targetX,
         y: targetY,
@@ -1348,6 +1354,7 @@ export class ViewTabComponent implements OnInit {
                 ...config,
                 id: 'relation' + '-' + String(UUID) + '-' + '0',
                 type: nodeType || id,
+                label: id,
               });
             }
           } else if (targetType === 'combo') {
@@ -1381,18 +1388,20 @@ export class ViewTabComponent implements OnInit {
     css.innerHTML = `${tagName}{display:inline-block}`;
     document.querySelector('app-cache').append(div, css, script);
     // 映射
-    // @ts-ignore
-    html2canvas(div).then((canvas) => {
-      let base = canvas.toDataURL('img');
-      Object.assign(mode, {
-        img: {
-          base,
-          width: div.offsetWidth,
-          height: div.offsetHeight,
-        },
+    setTimeout(() => {
+      // @ts-ignore
+      html2canvas(div).then((canvas) => {
+        let base = canvas.toDataURL('img');
+        Object.assign(mode, {
+          img: {
+            base,
+            width: div.offsetWidth,
+            height: div.offsetHeight,
+          },
+        });
+        this.focusNode = this.graph.addItem('node', { ...mode });
+        this.focus(this.focusNode);
       });
-      this.focusNode = this.graph.addItem('node', { ...mode });
-      this.focus(this.focusNode);
     });
   }
   handleCancel() {

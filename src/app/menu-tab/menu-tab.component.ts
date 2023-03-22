@@ -22,7 +22,7 @@ export class MenuTabComponent implements OnInit {
   getMenuList() {
     this.service.getMenus().subscribe((res: any) => {
       const { code, data } = res,
-        files: Set<string> = new Set(),
+        filesMap: Map<string, any> = new Map(),
         doms = [];
       // 规范menu
       let menuMap = new Map();
@@ -39,20 +39,29 @@ export class MenuTabComponent implements OnInit {
       data.forEach((menu) => {
         const { filesName, area } = menu;
         filesName.forEach((file) => {
-          files.add(area + '/' + file);
+          filesMap.set(
+            area + '/' + (typeof file == 'string' ? file : file.name),
+            file.decorator || {}
+          );
         });
       });
-      Array.from(files).forEach((add) => {
-        if (add.endsWith('.js')) {
+      for (let file of filesMap.keys()) {
+        if (file.endsWith('.js')) {
           let script = document.createElement('script');
-          script.src = add;
+          let decorator = filesMap.get(file);
+          Object.keys(decorator).forEach((key) => {
+            script[key] = decorator[key];
+          });
+          script.src = file;
           doms.push(script);
-        } else if (add.endsWith('.css')) {
+        } else if (file.endsWith('.css')) {
           let link = document.createElement('link');
-          link.href = add;
+          link.href = file;
+          link.rel = 'stylesheet';
+          link.type = 'text/css';
           doms.push(link);
         }
-      });
+      }
       document.body.append(...doms);
     });
   }

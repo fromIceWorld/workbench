@@ -77,6 +77,27 @@
         ></i
       ></ng-template>
     </span>
+    <span *ngIf="html[key].type === 'json'">
+      <nz-input-group [nzSuffix]="inputClearTpl">
+        <input
+          type="text"
+          nz-input
+          [(ngModel)]="html[key].value"
+          (focus)="updateFocus($event)"
+          (blur)="updateBlur($event)"
+        />
+      </nz-input-group>
+      <ng-template #inputClearTpl
+        ><i
+          nz-icon
+          class="ant-input-clear-icon"
+          nzTheme="fill"
+          nzType="close-circle"
+          *ngIf="html[key].value"
+          (click)="html[key].value = ''"
+        ></i
+      ></ng-template>
+    </span>
     <span *ngIf="html[key].type === 'number'">
       <nz-input-number
         [(ngModel)]="html[key].value"
