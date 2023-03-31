@@ -15,3 +15,15 @@
   z-index: 2;
   position: absolute;
 }
+::ng-deep .publish .ant-modal {
+  width: 720px;
+}
+.publish-item {
+  display: flex;
+}
+.publish-item span {
+  width: 90px;
+  margin-right: 4px;
+  font-size: 16px;
+  font-weight: 600;
+}

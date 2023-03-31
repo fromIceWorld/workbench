@@ -9,4 +9,9 @@ export class CommunicationService {
   getMenus() {
     return this.http.get(this.pre + '/menus');
   }
+  publishApplication(params) {
+    return this.http.post(this.pre + '/publishApplication', {
+      ...params,
+    });
+  }
 }

@@ -26,9 +26,19 @@
     nzType="download"
     nzTheme="outline"
     width="20px"
-    style="color: #c243b0"
+    style="color: #f5bf5d"
     class="btn"
     (click)="exportData($event)"
+  ></i>
+  <i
+    title="发布应用"
+    nz-icon
+    nzType="fork"
+    nzTheme="outline"
+    width="20px"
+    style="color: #c243b0"
+    class="btn"
+    (click)="publishAPP($event)"
   ></i>
   <span style="float: right; margin-right: 14px">
     <i
@@ -72,6 +82,7 @@
         [node]="btn.node"
         nzTheme="outline"
         width="20px"
+        [ngStyle]="{ color: btn.color || 'btn' }"
         class="btn menu-node"
       ></i>
     </span>

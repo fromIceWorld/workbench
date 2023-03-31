@@ -7,6 +7,7 @@ import {
 } from '@angular/core';
 import { NzModalService } from 'ng-zorro-antd/modal';
 import G6 from '../../../g6.min.js';
+import { CommunicationService } from '../communication.service';
 import { ralationMenu } from '../node-menu/relation-menu.js';
 import { enumArrow } from '../view-edges/index.js';
 import {
@@ -172,8 +173,17 @@ export class ViewTabComponent implements OnInit {
   scaleY;
   @ViewChild('dialog')
   dialog;
-  originFile = new Map();
+  originFile = {};
+  businessCodeJS = '';
+  htmlS = '';
+  appName = '';
+  tagName = '';
+  logicHash: number;
+  logicName = '';
+  logicContent = '';
+
   isVisible: boolean = false;
+  publishIsVisible: boolean = false;
   eventName: string = '';
   methodName: string = '';
   methods: string[] = [];
@@ -222,6 +232,7 @@ export class ViewTabComponent implements OnInit {
   idMapTag: Map<string, string> = new Map();
   constructor(
     private cd: ChangeDetectorRef,
+    private service: CommunicationService,
     private modalService: NzModalService,
     @Inject('bus') private bus
   ) {
@@ -334,12 +345,21 @@ export class ViewTabComponent implements OnInit {
   clearGraph() {
     this.graph.read({});
   }
+  downloadFile() {
+    this.exportData();
+    return;
+  }
+  scriptConfigKeys() {
+    return Object.keys(this.originFile);
+  }
+  // 导出数据
   exportData() {
+    this.logicHash = Math.random();
     // 节点数据
     const nodes = this.graph.getNodes(),
       combos = this.graph.getCombos();
     console.log(nodes, combos);
-    this.originFile.clear();
+    this.originFile = {};
     // 获取第一层节点
     let topNodes = nodes.filter((node) => !node._cfg.model.comboId);
     let topCombos = combos.filter((combo) => !combo._cfg.model.parentId);
@@ -437,11 +457,15 @@ export class ViewTabComponent implements OnInit {
         }
       })
       .join();
+    this.htmlS = html;
+    this.businessCodeJS = `${js};${jsString}`;
+    console.log(this.originFile, this.htmlS, this.businessCodeJS);
+    return;
     // 插入base
     let scriptString = ``,
       cssString = ``;
     console.log(this.originFile);
-    Array.from(this.originFile.entries()).forEach((file: any) => {
+    Object.entries(this.originFile).forEach((file: any) => {
       const [name, decorator] = file;
       console.log(file);
       if (name.endsWith('.js')) {
@@ -473,8 +497,8 @@ export class ViewTabComponent implements OnInit {
     ${js};
     ${jsString};
     `;
-
-    console.log(customElementScript);
+    console.log(scriptString, '\n', cssString, '\n', customElementScript);
+    return;
     // return;
     // 下载 html文件
     let string = `
@@ -518,6 +542,11 @@ export class ViewTabComponent implements OnInit {
     console.log('组件源文件', this.originFile);
     console.log('html', html);
     console.log('js', js);
+  }
+  publishAPP() {
+    this.exportData();
+    this.publishIsVisible = true;
+    console.log('publishAPP');
   }
   absoluteLayout() {
     let styles = [];
@@ -712,7 +741,7 @@ export class ViewTabComponent implements OnInit {
     filesName.forEach((file) => {
       let { decorator, name } =
         typeof file == 'string' ? { name: file, decorator: {} } : file;
-      this.originFile.set(area + '/' + name, decorator);
+      this.originFile[area + '/' + name] = decorator;
     });
     // 建立 node id与tagName的映射
     const originClass = window[className];
@@ -754,7 +783,7 @@ export class ViewTabComponent implements OnInit {
     filesName.forEach((file) => {
       let { decorator, name } =
         typeof file == 'string' ? { name: file, decorator: {} } : file;
-      this.originFile.set(area + '/' + name, decorator);
+      this.originFile[area + '/' + name] = decorator;
     });
     let { html, css, className } = node._cfg.model.config;
     const originClass = window[className],
@@ -950,6 +979,8 @@ export class ViewTabComponent implements OnInit {
         this.relationshipGraph.findById(model.id)._cfg.model.config = config;
       }
     }
+    console.log(this.focusNode);
+    this.graph.refreshPositions();
   }
   ngOnInit() {
     this.registerNodes();
@@ -1049,7 +1080,7 @@ export class ViewTabComponent implements OnInit {
     this.graph.setItemState(item, 'focus', true);
   }
   unFocus(item) {
-    if (!item) {
+    if (!item || item.destroyed) {
       return;
     }
     this.graph.setItemState(item, 'focus', false);
@@ -1400,6 +1431,14 @@ export class ViewTabComponent implements OnInit {
           },
         });
         this.focusNode = this.graph.addItem('node', { ...mode });
+        this.focusNode.toFront();
+        let parentCombo = this.graph.findById(
+          this.focusNode._cfg.model.comboId
+        );
+        if (parentCombo) {
+          this.graph.refreshItem(parentCombo);
+        }
+        console.log('this.focusNode', this.focusNode, parentCombo);
         this.focus(this.focusNode);
       });
     });
@@ -1469,5 +1508,47 @@ export class ViewTabComponent implements OnInit {
         )[0] || []
       ).children || []
     );
+  }
+  publishCancel() {
+    this.publishIsVisible = false;
+  }
+  publishHandleOk() {
+    //@ts-ignore
+    let files = {
+      ...this.originFile,
+    };
+    let defineComponent = `
+    customElements.define('${this.tagName}',
+      class MyComponent extends HTMLElement{
+        template = \`${this.htmlS}\`;
+        constructor(){
+          super();
+          this.innerHTML = this.template;
+        }
+      }
+    );`;
+    //定义web component  组件逻辑
+    let jsContent = `
+    ${defineComponent}
+    ${this.businessCodeJS}
+    `;
+    console.log(files, this.tagName, jsContent);
+    this.service
+      .publishApplication({
+        appName: this.appName,
+        tagName: this.tagName,
+        script: files,
+        component: {
+          src: `store/application/${this.appName}/${this.tagName}-${this.logicHash}.js`,
+        },
+        logic: jsContent,
+        fileName: `${this.tagName}-${this.logicHash}.js`,
+      })
+      .subscribe((res: any) => {
+        const { code, data } = res;
+        if (code == 200) {
+          this.publishIsVisible = false;
+        }
+      });
   }
 }

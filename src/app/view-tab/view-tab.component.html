@@ -133,3 +133,80 @@
     </button>
   </ng-template>
 </nz-modal>
+<!-- 发布应用 -->
+<div class="publish">
+  <nz-modal
+    [nzStyle]="{ width: '720px' }"
+    [nzBodyStyle]="{ width: '720px' }"
+    [(nzVisible)]="publishIsVisible"
+    [nzContent]="publishContent"
+    [nzFooter]="publishFooter"
+    nzTitle="发布应用"
+  >
+    <ng-template #publishContent>
+      <p class="publish-item">
+        <span>appName: </span>
+        <input nz-input placeholder="应用名称" [(ngModel)]="appName" />
+      </p>
+      <p class="publish-item">
+        <span>tagName: </span>
+        <input
+          nz-input
+          placeholder="web component的tagName"
+          [(ngModel)]="tagName"
+        />
+      </p>
+      <p class="publish-item">
+        <span>logicFile: </span>
+        store/application/{{ appName }}/{{ tagName }}-{{ logicHash }}.js
+      </p>
+      <p class="publish-item">
+        <span>script / css:</span>
+        <nz-table
+          [ngStyle]="{ flex: 1 }"
+          #basicTable
+          nzSize="small"
+          [nzData]="scriptConfigKeys()"
+          [nzShowPagination]="false"
+        >
+          <thead>
+            <tr>
+              <th>src</th>
+              <th>defer</th>
+              <th>async</th>
+              <th>type</th>
+              <th>crossorigin</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let key of scriptConfigKeys()">
+              <td>{{ key }}</td>
+              <td>{{ originFile[key].defer || "-" }}</td>
+              <td>{{ originFile[key].async || "-" }}</td>
+              <td>{{ originFile[key].type || "-" }}</td>
+              <td>{{ originFile[key].crossorigin || "-" }}</td>
+            </tr>
+            <tr>
+              <td>store/application/{{ tagName }}-{{ logicHash }}.js</td>
+              <td>true</td>
+              <td>-</td>
+              <td>-</td>
+              <td>-</td>
+            </tr>
+          </tbody>
+        </nz-table>
+      </p>
+    </ng-template>
+    <ng-template #publishFooter>
+      <button nz-button nzType="default" (click)="publishCancel()">取消</button>
+      <button
+        nz-button
+        nzType="primary"
+        (click)="publishHandleOk()"
+        [nzLoading]="isConfirmLoading"
+      >
+        确认
+      </button>
+    </ng-template>
+  </nz-modal>
+</div>

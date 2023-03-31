@@ -14,6 +14,7 @@ export class MenuTabComponent implements OnInit {
   @Output() cache = new EventEmitter();
   @Output() recover = new EventEmitter();
   @Output() export = new EventEmitter();
+  @Output() publish = new EventEmitter();
   @Output() change = new EventEmitter();
   ViewTypes = ViewTypes;
   viewType: ViewTypes = ViewTypes.view;
@@ -84,5 +85,9 @@ export class MenuTabComponent implements OnInit {
   }
   menuConfigKeys() {
     return Object.keys(this.menuConfig);
+  }
+  //发布应用
+  publishAPP(e) {
+    this.publish.emit();
   }
 }

@@ -20,6 +20,9 @@ export class WorkbenchComponent implements OnInit {
   exportData(e) {
     this.view.exportData();
   }
+  publishAPP(e) {
+    this.view.publishAPP();
+  }
   changeView(e) {
     console.log(this.view.tabView);
     this.view.changeView();
