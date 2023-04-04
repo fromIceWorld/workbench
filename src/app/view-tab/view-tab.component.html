@@ -141,6 +141,7 @@
     [(nzVisible)]="publishIsVisible"
     [nzContent]="publishContent"
     [nzFooter]="publishFooter"
+    (nzOnCancel)="publishCancel()"
     nzTitle="发布应用"
   >
     <ng-template #publishContent>
