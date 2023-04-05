@@ -12,10 +12,11 @@ export class WorkbenchComponent implements OnInit {
   @ViewChild('config') config;
   constructor(private bus: EventBusService) {}
   cacheData(e) {
-    this.view.cacheData();
+    console.log(e);
+    this.view.cacheData(e);
   }
   recoverData(e) {
-    this.view.recoverData();
+    this.view.recoverData(e);
   }
   exportData(e) {
     this.view.exportData();

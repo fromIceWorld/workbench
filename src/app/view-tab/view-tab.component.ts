@@ -5,11 +5,13 @@ import {
   OnInit,
   ViewChild,
 } from '@angular/core';
+import { NzMessageService } from 'ng-zorro-antd/message';
 import { NzModalService } from 'ng-zorro-antd/modal';
 import G6 from '../../../g6.min.js';
 import { CommunicationService } from '../communication.service';
 import { ralationMenu } from '../node-menu/relation-menu.js';
 import { enumArrow } from '../view-edges/index.js';
+
 import {
   registerAPI,
   registerBlock,
@@ -234,6 +236,7 @@ export class ViewTabComponent implements OnInit {
     private cd: ChangeDetectorRef,
     private service: CommunicationService,
     private modalService: NzModalService,
+    private message: NzMessageService,
     @Inject('bus') private bus
   ) {
     this.bus.center.subscribe((res: any) => {
@@ -292,7 +295,7 @@ export class ViewTabComponent implements OnInit {
       this.tabView = 'design-view';
     }
   }
-  cacheData() {
+  cacheData(params) {
     let cache = {
       view: {
         nodes: this.graph.getNodes().map((node) => {
@@ -331,16 +334,22 @@ export class ViewTabComponent implements OnInit {
         }),
       },
     };
-    localStorage.setItem('graphData', JSON.stringify(cache));
+    this.cacheConfig({ ...params, json: JSON.stringify(cache) });
   }
-  recoverData() {
-    let cache = localStorage.getItem('graphData');
-    if (cache) {
-      let { view, relation } = JSON.parse(cache);
-      this.graph.read(view);
-      // 渲染连线图
-      this.relationshipGraph.read(relation);
-    }
+  cacheConfig(params) {
+    this.service.cacheConfig(params).subscribe((res: any) => {
+      const { code } = res;
+      if (code == 200) {
+        this.message.create('success', '缓存组件配置成功');
+      }
+    });
+  }
+  recoverData(json) {
+    let { view, relation } = JSON.parse(json);
+    this.graph.read(view);
+    // 渲染连线图
+    this.relationshipGraph.read(relation);
+    this.message.create('success', '应用组件配置成功');
   }
   clearGraph() {
     this.graph.read({});
@@ -460,7 +469,6 @@ export class ViewTabComponent implements OnInit {
     this.htmlS = html;
     this.businessCodeJS = `${js};${jsString}`;
     console.log(this.originFile, this.htmlS, this.businessCodeJS);
-    return;
     // 插入base
     let scriptString = ``,
       cssString = ``;
@@ -498,7 +506,6 @@ export class ViewTabComponent implements OnInit {
     ${jsString};
     `;
     console.log(scriptString, '\n', cssString, '\n', customElementScript);
-    return;
     // return;
     // 下载 html文件
     let string = `
@@ -1031,7 +1038,6 @@ export class ViewTabComponent implements OnInit {
         container: 'design-view',
         width,
         height,
-        groupByTypes: false,
         modes: {
           default: ['drag-node', 'drag-combo'],
         },
@@ -1046,27 +1052,13 @@ export class ViewTabComponent implements OnInit {
           },
         },
         defaultNode: {
-          type: 'star',
-          size: [60, 30],
-          labelCfg: {
-            position: 'bottom',
-            offset: 20,
-          },
-          linkPoints: {
-            top: true,
-            right: true,
-            bottom: true,
-            left: true,
-          },
-          icon: {
-            show: true,
-          },
+          type: 'rect-node',
         },
         defaultCombo: {
           type: 'container', // Combo 类型
         },
         plugins: [grid, snapLine],
-        renderer: 'canvas',
+        // renderer: 'canvas',
       });
     this.graph = graph;
     graph.read(this.data);
@@ -1431,7 +1423,7 @@ export class ViewTabComponent implements OnInit {
           },
         });
         this.focusNode = this.graph.addItem('node', { ...mode });
-        this.focusNode.toFront();
+        // this.focusNode.toFront();
         let parentCombo = this.graph.findById(
           this.focusNode._cfg.model.comboId
         );

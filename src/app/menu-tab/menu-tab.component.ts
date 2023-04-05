@@ -16,10 +16,29 @@ export class MenuTabComponent implements OnInit {
   @Output() export = new EventEmitter();
   @Output() publish = new EventEmitter();
   @Output() change = new EventEmitter();
+  cacheVisible = false;
   ViewTypes = ViewTypes;
+  cacheDialog = false;
+  componentDialog = false;
+  componentList = [];
+  configParams = {
+    tagName: '',
+    desc: '',
+  };
   viewType: ViewTypes = ViewTypes.view;
   menuConfig = [];
   constructor(private service: CommunicationService) {}
+  showComponentDialog() {
+    this.componentDialog = true;
+  }
+  getComponentConfig() {
+    this.service.getComponentConfig().subscribe((res: any) => {
+      const { code, data } = res;
+      if (code == 200) {
+        this.componentList = data;
+      }
+    });
+  }
   getMenuList() {
     this.service.getMenus().subscribe((res: any) => {
       const { code, data } = res,
@@ -67,10 +86,12 @@ export class MenuTabComponent implements OnInit {
     });
   }
   cacheData(e) {
-    this.cache.emit();
-  }
-  recoverData(e) {
-    this.recover.emit();
+    this.cacheDialog = true;
+    this.cache.emit({
+      tagName: this.configParams.tagName,
+      desc: this.configParams.desc,
+    });
+    this.cacheVisible = false;
   }
   exportData(e) {
     this.export.emit();
@@ -82,6 +103,7 @@ export class MenuTabComponent implements OnInit {
   }
   ngOnInit(): void {
     this.getMenuList();
+    this.getComponentConfig();
   }
   menuConfigKeys() {
     return Object.keys(this.menuConfig);
@@ -89,5 +111,11 @@ export class MenuTabComponent implements OnInit {
   //发布应用
   publishAPP(e) {
     this.publish.emit();
+  }
+  apply(e, item) {
+    console.log(item);
+    const { json } = item;
+    this.recover.emit(json);
+    this.componentDialog = false;
   }
 }

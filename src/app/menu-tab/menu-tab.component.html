@@ -7,8 +7,37 @@
     width="20px"
     class="btn"
     style="color: #0093ff"
-    (click)="cacheData($event)"
+    nz-popover
+    [(nzPopoverVisible)]="cacheVisible"
+    nzPopoverTitle="保存配置项"
+    [nzPopoverContent]="contentTemplate"
+    nzPopoverTrigger="click"
   ></i>
+  <ng-template #contentTemplate>
+    <div>
+      <p>
+        配置名称：<input
+          nz-input
+          placeholder="请输入配置名称"
+          [(ngModel)]="configParams.tagName"
+        />
+      </p>
+      <p>
+        描述：<textarea
+          rows="4"
+          nz-input
+          placeholder="请输入配置相关描述"
+          [(ngModel)]="configParams.desc"
+        ></textarea>
+      </p>
+      <p style="text-align: right">
+        <button nz-button nzType="primary" (click)="cacheData($event)">
+          <span nz-icon nzType="cloud-upload"></span>
+          保存
+        </button>
+      </p>
+    </div>
+  </ng-template>
   <i
     title="恢复数据"
     nz-icon
@@ -17,11 +46,11 @@
     style="color: #3ab428"
     width="20px"
     class="btn"
-    (click)="recoverData($event)"
+    (click)="showComponentDialog()"
   ></i>
 
   <i
-    title="导出数据"
+    title="下载文件"
     nz-icon
     nzType="download"
     nzTheme="outline"
@@ -88,3 +117,39 @@
     </span>
   </div>
 </div>
+<!-- 组件配置列表 -->
+<nz-modal
+  [(nzVisible)]="componentDialog"
+  nzTitle="component列表"
+  nzWidth="800px"
+  [nzFooter]="null"
+  nzMaskClosable="false"
+  (nzOnCancel)="componentDialog = false"
+>
+  <ng-container *nzModalContent [ngStyle]="{ width: '800px' }">
+    <nz-table nzSize="small">
+      <thead>
+        <tr>
+          <th>配置名称</th>
+          <th>描述</th>
+          <th>操作</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let com of componentList">
+          <td>{{ com.tagName }}</td>
+          <td>{{ com.desc }}</td>
+          <td>
+            <span
+              nz-icon
+              nzType="form"
+              nzTheme="outline"
+              style="cursor: pointer; color: #ff69b4"
+              (click)="apply($event, com)"
+            ></span>
+          </td>
+        </tr>
+      </tbody>
+    </nz-table>
+  </ng-container>
+</nz-modal>

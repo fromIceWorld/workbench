@@ -9,7 +9,9 @@ import { NzIconModule } from 'ng-zorro-antd/icon';
 import { NzInputModule } from 'ng-zorro-antd/input';
 import { NzInputNumberModule } from 'ng-zorro-antd/input-number';
 import { NzListModule } from 'ng-zorro-antd/list';
+import { NzMessageModule } from 'ng-zorro-antd/message';
 import { NzModalModule } from 'ng-zorro-antd/modal';
+import { NzPopoverModule } from 'ng-zorro-antd/popover';
 import { NzRadioModule } from 'ng-zorro-antd/radio';
 import { NzSelectModule } from 'ng-zorro-antd/select';
 import { NzSwitchModule } from 'ng-zorro-antd/switch';
@@ -51,6 +53,8 @@ import { WorkbenchComponent } from './workbench/workbench.component';
     NzAlertModule,
     NzTableModule,
     NzListModule,
+    NzPopoverModule,
+    NzMessageModule,
   ],
   providers: [{ provide: 'bus', useClass: EventBusService }],
   bootstrap: [WorkbenchComponent],
