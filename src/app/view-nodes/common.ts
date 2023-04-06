@@ -52,16 +52,35 @@ function registerCommon() {
           group = node.getContainer();
         const container = group.getFirst(),
           img = group.getLast();
+        // 获取真实组件
+        // 获取的 dom 是 生成 web component时定义的一个外层，表现形式类似div，宽度默认是100% 在映射到视图区时有空白内容;
+        // 强制 web component 内部只有一个根标签，容易获取。
+        // Angular 可直接获取子节点。
+        // Vue 有一层 shadowRoot包裹，需要更深入取值。
+        let component, children;
+        if (dom.shadowRoot) {
+          children = dom.shadowRoot.children;
+        } else {
+          children = dom.children;
+        }
+        for (let node of children) {
+          let tagName = node;
+          if (!['STYLE', 'SCRIPT'].includes(tagName)) {
+            component = node;
+            break;
+          }
+        }
+        console.log('component-----------------------------', component);
         //@ts-ignore
-        html2canvas(dom).then((canvas) => {
+        html2canvas(component).then((canvas) => {
           console.log(
             canvas.toDataURL('img'),
-            dom.offsetWidth,
-            dom.offsetHeight
+            component.offsetWidth,
+            component.offsetHeight
           );
           container.attr({
-            width: dom.offsetWidth,
-            height: dom.offsetHeight,
+            width: component.offsetWidth,
+            height: component.offsetHeight,
           });
           img.attr('img', canvas.toDataURL('img'));
         });

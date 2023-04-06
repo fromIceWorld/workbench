@@ -1408,18 +1408,37 @@ export class ViewTabComponent implements OnInit {
     container.innerHTML = html;
     const div = container.firstChild as HTMLElement;
     script.innerHTML = js;
-    css.innerHTML = `${tagName}{display:inline-block}`;
+    // css.innerHTML = `${tagName}{display:inline-block}`;
     document.querySelector('app-cache').append(div, css, script);
     // 映射
     setTimeout(() => {
+      console.log('create Component', div);
+      // 获取真实组件
+      // 获取的 dom 是 生成 web component时定义的一个外层，表现形式类似div，宽度默认是100% 在映射到视图区时有空白内容;
+      // 强制 web component 内部只有一个根标签，容易获取。
+      // Angular 可直接获取子节点。
+      // Vue 有一层 shadowRoot包裹，需要更深入取值。
+      let component, children;
+      if (div.shadowRoot) {
+        children = div.shadowRoot.children;
+      } else {
+        children = div.children;
+      }
+      for (let node of children) {
+        let tagName = node;
+        if (!['STYLE', 'SCRIPT'].includes(tagName)) {
+          component = node;
+          break;
+        }
+      }
       // @ts-ignore
-      html2canvas(div).then((canvas) => {
+      html2canvas(component).then((canvas) => {
         let base = canvas.toDataURL('img');
         Object.assign(mode, {
           img: {
             base,
-            width: div.offsetWidth,
-            height: div.offsetHeight,
+            width: component.offsetWidth,
+            height: component.offsetHeight,
           },
         });
         this.focusNode = this.graph.addItem('node', { ...mode });
