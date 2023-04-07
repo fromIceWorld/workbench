@@ -295,6 +295,7 @@ export class ViewTabComponent implements OnInit {
       this.tabView = 'design-view';
     }
   }
+  // 缓存节点配置
   cacheData(params) {
     let cache = {
       view: {
@@ -334,7 +335,23 @@ export class ViewTabComponent implements OnInit {
         }),
       },
     };
-    this.cacheConfig({ ...params, json: JSON.stringify(cache) });
+    let cacheCopy = JSON.parse(JSON.stringify(cache));
+    const relationNodes = cacheCopy.relation.nodes,
+      viewNodes = cacheCopy.view.nodes;
+    let tagMap = new Map();
+    // 替换 tagName 以避免在缓存后应用节点时tagName冲突
+    for (let node of [...viewNodes, ...relationNodes]) {
+      const { tagName } = node;
+      if (tagMap.has(tagName)) {
+        node['tagName'] = tagMap.get(tagName);
+      } else {
+        let [pre1, pre2, id] = tagName.split('-');
+        let newTagName = `${pre1}-${pre2}-${String(Math.random).substring(2)}`;
+        node['tagName'] = newTagName;
+        tagMap.set(tagName, newTagName);
+      }
+    }
+    this.cacheConfig({ ...params, json: JSON.stringify(cacheCopy) });
   }
   cacheConfig(params) {
     this.service.cacheConfig(params).subscribe((res: any) => {
@@ -531,7 +548,6 @@ export class ViewTabComponent implements OnInit {
     const a = document.createElement('a'),
       href = URL.createObjectURL(htmlBlob);
     a.href = href;
-    let hash = new Date();
     a.download = 'index.html';
     document.body.appendChild(a);
     a.click();
@@ -793,17 +809,19 @@ export class ViewTabComponent implements OnInit {
       this.originFile[area + '/' + name] = decorator;
     });
     let { html, css, className } = node._cfg.model.config;
-    const originClass = window[className],
-      index = (originClass as any).index;
-    this.idMapTag.set(
-      node._cfg.id.split('-')[1],
-      (originClass as any).tagNamePrefix + '-' + index
-    );
-    return (originClass as any).extends({
+    const originClass = window[className];
+
+    const { html: htmlString, js: jsString } = (originClass as any).extends({
       html,
       css,
       className,
     });
+    const tagName = htmlString.match(/\<\/([0-9\-a-z]*)\>$/)[1];
+    this.idMapTag.set(node._cfg.id.split('-')[1], tagName);
+    return {
+      html: htmlString,
+      js: jsString,
+    };
   }
   onEdit(status) {
     this.jsonOnEdit = status;
@@ -1425,7 +1443,7 @@ export class ViewTabComponent implements OnInit {
         children = div.children;
       }
       for (let node of children) {
-        let tagName = node;
+        let tagName = node.tagName;
         if (!['STYLE', 'SCRIPT'].includes(tagName)) {
           component = node;
           break;

@@ -113,8 +113,8 @@ export class MenuTabComponent implements OnInit {
     this.publish.emit();
   }
   apply(e, item) {
-    console.log(item);
     const { json } = item;
+    console.log(JSON.parse(json));
     this.recover.emit(json);
     this.componentDialog = false;
   }
