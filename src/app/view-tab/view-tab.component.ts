@@ -371,9 +371,21 @@ export class ViewTabComponent implements OnInit {
   clearGraph() {
     this.graph.read({});
   }
-  downloadFile() {
-    this.exportData();
-    return;
+
+  getScriptConfig() {
+    this.originFile = {};
+
+    // 保存组件的源文件
+    let nodes = this.graph.getNodes(),
+      combos = this.graph.getCombos();
+    [...nodes, ...combos].forEach((item) => {
+      const { filesName, area } = item._cfg.model;
+      filesName.forEach((file) => {
+        let { decorator, name } =
+          typeof file == 'string' ? { name: file, decorator: {} } : file;
+        this.originFile[area + '/' + name] = decorator || {};
+      });
+    });
   }
   scriptConfigKeys() {
     return Object.keys(this.originFile);
@@ -381,11 +393,11 @@ export class ViewTabComponent implements OnInit {
   // 导出数据
   exportData() {
     this.logicHash = Math.random();
+    this.getScriptConfig();
     // 节点数据
     const nodes = this.graph.getNodes(),
       combos = this.graph.getCombos();
     console.log(nodes, combos);
-    this.originFile = {};
     // 获取第一层节点
     let topNodes = nodes.filter((node) => !node._cfg.model.comboId);
     let topCombos = combos.filter((combo) => !combo._cfg.model.parentId);
@@ -435,8 +447,8 @@ export class ViewTabComponent implements OnInit {
                       target.split('-')[1]
                     )}'),
                     targetPath = (targetDOM.getAttribute('_methods')||'').split('.');
-                let targetIns = targetPath.reduce((pre,key)=>pre[key],targetDOM);
                 sourceDOM.addEventListener('${event}', (e)=>{
+                  let targetIns = targetPath.length ? targetPath.reduce((pre,key)=>key ? pre[key] : pre,targetDOM) : targetDOM;
                   targetIns['${fn}']();
                 });
             })();
@@ -453,9 +465,9 @@ export class ViewTabComponent implements OnInit {
                     )}'),
                     sourcePath = (sourceDOM.getAttribute('_data')||'').split('.'),
                     targetPath = (targetDOM.getAttribute('_data')||'').split('.');
-              let sourceIns = sourcePath.reduce((pre,key)=>pre[key],sourceDOM),
-                  targetIns = targetPath.reduce((pre,key)=>pre[key],targetDOM);      
               sourceDOM.addEventListener('${hook}',()=>{
+                let sourceIns = sourcePath.length ? sourcePath.reduce((pre,key)=>key ? pre[key] : pre,sourceDOM) : sourceDOM,
+                    targetIns = targetPath.length ? targetPath.reduce((pre,key)=>key ? pre[key] : pre,targetDOM) : targetDOM;
                 targetIns['${targetData}'] = sourceIns['${sourceData}'];
               })
             })();
@@ -472,8 +484,8 @@ export class ViewTabComponent implements OnInit {
                   )}'),
                   sourcePath = (sourceDOM.getAttribute('_data')||'').split('.'),
                   targetPath = (targetDOM.getAttribute('_methods')||'').split('.');
-            let sourceIns = sourcePath.reduce((pre,key)=>pre[key],sourceDOM),
-                targetIns = targetPath.reduce((pre,key)=>pre[key],targetDOM);   
+            let sourceIns = sourcePath.length ? sourcePath.reduce((pre,key)=>key ? pre[key] : pre,sourceDOM) : sourceDOM,
+                targetIns = targetPath.length ? targetPath.reduce((pre,key)=>key ? pre[key] : pre,targetDOM) : targetDOM;   
             if(!targetIns['${fn}'].params){
               targetIns['${fn}'].params = []
             }
@@ -485,17 +497,18 @@ export class ViewTabComponent implements OnInit {
       .join();
     this.htmlS = html;
     this.businessCodeJS = `${js};${jsString}`;
-    console.log(this.originFile, this.htmlS, this.businessCodeJS);
+  }
+  downloadFile() {
+    this.exportData();
     // 插入base
     let scriptString = ``,
       cssString = ``;
-    console.log(this.originFile);
     Object.entries(this.originFile).forEach((file: any) => {
       const [name, decorator] = file;
       console.log(file);
       if (name.endsWith('.js')) {
         scriptString += `<script src="http://localhost:3000/${name}"`;
-        Object.entries(decorator).forEach((config) => {
+        Object.entries(decorator || {}).forEach((config) => {
           let [key, value] = config;
           let type = typeof value;
           if (type == 'string') {
@@ -510,39 +523,38 @@ export class ViewTabComponent implements OnInit {
       }
     });
     let customElementScript = `
-    customElements.define('my-component',
-      class MyComponent extends HTMLElement{
-        template = \`${html}\`;
-        constructor(){
-          super();
-          this.innerHTML = this.template;
+      customElements.define('my-component',
+        class MyComponent extends HTMLElement{
+          template = \`${this.htmlS}\`;
+          constructor(){
+            super();
+            this.innerHTML = this.template;
+          }
         }
-      }
-    );
-    ${js};
-    ${jsString};
-    `;
+      );
+      ${this.businessCodeJS};
+      `;
     console.log(scriptString, '\n', cssString, '\n', customElementScript);
     // return;
     // 下载 html文件
     let string = `
-    <!DOCTYPE html>
-    <html lang="en">
-        <head>
-            <meta charset="utf-8" />
-            <title>展示区</title>
-            <base href="./" />
-            <meta name="viewport" content="width=device-width, initial-scale=1" />
-            ${scriptString}
-            ${cssString}
-            <script src="./logic.js" defer></script>
-        </head>
-        <body>
-          <my-component></my-component>
-        </body>
-       
-    </html>
-    `;
+      <!DOCTYPE html>
+      <html lang="en">
+          <head>
+              <meta charset="utf-8" />
+              <title>展示区</title>
+              <base href="./" />
+              <meta name="viewport" content="width=device-width, initial-scale=1" />
+              ${scriptString}
+              ${cssString}
+              <script src="./logic.js" defer></script>
+          </head>
+          <body>
+            <my-component></my-component>
+          </body>
+         
+      </html>
+      `;
     // 下载 index.html 和业务逻辑 script
     const htmlBlob = new Blob([string], { type: 'text/html' });
     const a = document.createElement('a'),
@@ -563,13 +575,12 @@ export class ViewTabComponent implements OnInit {
     a.remove();
     URL.revokeObjectURL(href);
     console.log('组件源文件', this.originFile);
-    console.log('html', html);
-    console.log('js', js);
+    return;
   }
   publishAPP() {
     this.exportData();
     this.publishIsVisible = true;
-    console.log('publishAPP');
+    // 展示 组件需要的 script配置;
   }
   absoluteLayout() {
     let styles = [];
@@ -760,12 +771,6 @@ export class ViewTabComponent implements OnInit {
       combos = allCombos.filter(
         (com) => com._cfg.model.parentId == combo._cfg.id
       );
-    // 保存组件的源文件
-    filesName.forEach((file) => {
-      let { decorator, name } =
-        typeof file == 'string' ? { name: file, decorator: {} } : file;
-      this.originFile[area + '/' + name] = decorator;
-    });
     // 建立 node id与tagName的映射
     const originClass = window[className];
 
@@ -802,12 +807,6 @@ export class ViewTabComponent implements OnInit {
   // 导出节点数据
   exportNode(node) {
     const { area, filesName } = node._cfg.model;
-    // 保存组件的源文件
-    filesName.forEach((file) => {
-      let { decorator, name } =
-        typeof file == 'string' ? { name: file, decorator: {} } : file;
-      this.originFile[area + '/' + name] = decorator;
-    });
     let { html, css, className } = node._cfg.model.config;
     const originClass = window[className];
 
@@ -1233,7 +1232,14 @@ export class ViewTabComponent implements OnInit {
         }
       }
     });
+    graph.on('click', (evt) => {
+      this.focusCombo = null;
+      this.focusNode = null;
+      console.log('画布点击');
+      // TODO:配置背景色
+    });
     graph.on('node:click', (evt) => {
+      console.log('node点击');
       this.focusCombo = null;
       const { item } = evt,
         { html, css } = item._cfg.model.config;
@@ -1249,6 +1255,7 @@ export class ViewTabComponent implements OnInit {
       this.onEdit(false);
     });
     graph.on('combo:click', (evt) => {
+      console.log('combo点击');
       // 展示combo  json 数据
       const { item } = evt,
         { html, css } = item._cfg.model.config;
@@ -1364,7 +1371,7 @@ export class ViewTabComponent implements OnInit {
             area,
             filesName,
           };
-          //
+
           if (targetType === 'node') {
             if (view & NodePosition.view) {
               if (nodeType) {
@@ -1431,6 +1438,7 @@ export class ViewTabComponent implements OnInit {
     // 映射
     setTimeout(() => {
       console.log('create Component', div);
+
       // 获取真实组件
       // 获取的 dom 是 生成 web component时定义的一个外层，表现形式类似div，宽度默认是100% 在映射到视图区时有空白内容;
       // 强制 web component 内部只有一个根标签，容易获取。
@@ -1449,6 +1457,56 @@ export class ViewTabComponent implements OnInit {
           break;
         }
       }
+      // 引入阿里图标库 svg icon 外链式需特殊处理 symbol
+      if (component.tagName == 'svg') {
+        let use = component.children[0];
+        let link = use.getAttribute('xlink:href');
+        let symbol = document.querySelector(`symbol[id=${link.slice(1)}]`);
+        let newSvg = document.createElementNS(
+          'http://www.w3.org/2000/svg',
+          'svg'
+        );
+        newSvg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+        newSvg.setAttribute('viewBox', '0 0 1024 1024');
+        newSvg.setAttribute('class', 'icon');
+        newSvg.setAttribute('version', '1.1');
+        newSvg.innerHTML = symbol.innerHTML;
+        const src = `data:image/svg+xml;base64,${window.btoa(
+          new XMLSerializer().serializeToString(newSvg)
+        )}`; // base64转化
+        const img = new Image(); // 图片容器承载过渡
+        img.src = src;
+        img.setAttribute('class', 'icon');
+        // // 图片创建后再执行，转Base64过程
+        // const canvas = document.createElement('canvas');
+        // canvas.width = img.width;
+        // canvas.height = img.height;
+        // const context = canvas.getContext('2d');
+        // context.drawImage(img, 0, 0);
+        // const ImgBase64 = canvas.toDataURL('image/png');
+        console.log('Svg 转 png', src);
+        let base = src,
+          fontSize = Number(component.style['font-size'].slice(0, -2));
+        Object.assign(mode, {
+          img: {
+            base,
+            width: fontSize,
+            height: fontSize,
+          },
+        });
+        this.focusNode = this.graph.addItem('node', { ...mode });
+        // this.focusNode.toFront();
+        let parentCombo = this.graph.findById(
+          this.focusNode._cfg.model.comboId
+        );
+        if (parentCombo) {
+          this.graph.refreshItem(parentCombo);
+        }
+        console.log('this.focusNode', this.focusNode, parentCombo);
+        this.focus(this.focusNode);
+        return;
+      }
+      // html2canvas 实时解析dom生成canvas,由于echarts 等图有渲染动画，因此需延迟生成图片
       // @ts-ignore
       html2canvas(component).then((canvas) => {
         let base = canvas.toDataURL('img');
@@ -1470,7 +1528,7 @@ export class ViewTabComponent implements OnInit {
         console.log('this.focusNode', this.focusNode, parentCombo);
         this.focus(this.focusNode);
       });
-    });
+    }, 1000);
   }
   handleCancel() {
     if (this.isCreate) {
@@ -1540,6 +1598,7 @@ export class ViewTabComponent implements OnInit {
   }
   publishCancel() {
     this.publishIsVisible = false;
+    // 存储 nodes 的 script 配置;
   }
   publishHandleOk() {
     //@ts-ignore

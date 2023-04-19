@@ -35,3 +35,6 @@ i {
   cursor: pointer;
   margin: 4px;
 }
+.component-config {
+  display: flex;
+}

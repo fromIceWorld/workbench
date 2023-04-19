@@ -1,6 +1,9 @@
 <div class="tab-container">
   <p>数据:</p>
-  <div *ngFor="let key of originKeys(html); index as i">
+  <div
+    *ngFor="let key of originKeys(html); index as i"
+    class="component-config"
+  >
     <span class="label">{{ key }}</span>
     <span *ngIf="html[key].type === 'boolean'">
       <nz-switch
@@ -21,7 +24,7 @@
       >
         <nz-option
           *ngFor="let item of html[key].options"
-          [nzValue]="item.value ? item.value : item"
+          [nzValue]="item.value !== undefined ? item.value : item"
           [nzLabel]="item.label ? item.label : item"
         ></nz-option>
       </nz-select>
@@ -105,6 +108,23 @@
         [nzStep]="1"
         (nzBlur)="updateConfig($event)"
       ></nz-input-number>
+    </span>
+    <span *ngIf="html[key].type === 'icon'">
+      <nz-radio-group
+        [(ngModel)]="html[key].value"
+        (ngModelChange)="updateConfig($event)"
+      >
+        <label
+          style="display: block"
+          nz-radio
+          [nzValue]="icon"
+          *ngFor="let icon of html[key].options"
+        >
+          <svg class="icon" aria-hidden="true" style="font-size: 16px">
+            <use [attr.xlink:href]="icon"></use>
+          </svg>
+        </label>
+      </nz-radio-group>
     </span>
   </div>
   <p>样式</p>

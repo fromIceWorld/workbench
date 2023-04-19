@@ -13,7 +13,7 @@ enum ViewTypes {
 export class MenuTabComponent implements OnInit {
   @Output() cache = new EventEmitter();
   @Output() recover = new EventEmitter();
-  @Output() export = new EventEmitter();
+  @Output() downloadEmit = new EventEmitter();
   @Output() publish = new EventEmitter();
   @Output() change = new EventEmitter();
   cacheVisible = false;
@@ -93,8 +93,8 @@ export class MenuTabComponent implements OnInit {
     });
     this.cacheVisible = false;
   }
-  exportData(e) {
-    this.export.emit();
+  download(e) {
+    this.downloadEmit.emit();
   }
   changeView(e) {
     this.viewType =

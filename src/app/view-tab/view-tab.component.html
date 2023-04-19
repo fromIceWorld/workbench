@@ -182,10 +182,12 @@
           <tbody>
             <tr *ngFor="let key of scriptConfigKeys()">
               <td>{{ key }}</td>
-              <td>{{ originFile[key].defer || "-" }}</td>
-              <td>{{ originFile[key].async || "-" }}</td>
-              <td>{{ originFile[key].type || "-" }}</td>
-              <td>{{ originFile[key].crossorigin || "-" }}</td>
+              <td>{{ (originFile[key] && originFile[key].defer) || "-" }}</td>
+              <td>{{ (originFile[key] && originFile[key].async) || "-" }}</td>
+              <td>{{ (originFile[key] && originFile[key].type) || "-" }}</td>
+              <td>
+                {{ (originFile[key] && originFile[key].crossorigin) || "-" }}
+              </td>
             </tr>
             <tr>
               <td>store/application/{{ tagName }}-{{ logicHash }}.js</td>

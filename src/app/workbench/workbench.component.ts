@@ -18,8 +18,8 @@ export class WorkbenchComponent implements OnInit {
   recoverData(e) {
     this.view.recoverData(e);
   }
-  exportData(e) {
-    this.view.exportData();
+  downloadFile(e) {
+    this.view.downloadFile();
   }
   publishAPP(e) {
     this.view.publishAPP();

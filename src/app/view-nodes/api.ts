@@ -69,9 +69,7 @@ function registerAPI() {
         //   });
         // });
       },
-
       // response the state changes and show/hide the link-point circles
-
       update(cfg, node) {
         const name = '★',
           textLength = measureText(name, '14px'),
