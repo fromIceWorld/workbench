@@ -20,6 +20,7 @@ import {
   registerContainer,
   registerDefault,
   registerDialog,
+  registerHook,
   registerInput,
   registerRadio,
   registerScaleX,
@@ -269,6 +270,7 @@ export class ViewTabComponent implements OnInit {
     registerAPI();
     registerText();
     registrForm();
+    registerHook();
     registerCommon();
   }
   renderScale() {
@@ -403,7 +405,9 @@ export class ViewTabComponent implements OnInit {
     let topCombos = combos.filter((combo) => !combo._cfg.model.parentId);
     // 第一层 限定只有一个 combo
     let sortKey =
-      topCombos[0]._cfg.model.config.css.style[''] == 'row' ? 'x' : 'y';
+      topCombos[0] && topCombos[0]._cfg.model.config.css.style[''] == 'row'
+        ? 'x'
+        : 'y';
     let [html, js] = [...topNodes, ...topCombos]
       .sort((a, b) => a._cfg.model[sortKey] - b._cfg.model[sortKey])
       .map((item) => {
@@ -529,6 +533,9 @@ export class ViewTabComponent implements OnInit {
           constructor(){
             super();
             this.innerHTML = this.template;
+          }
+          connectedCallback(){
+            console.log('应用: connectedCallback')
           }
         }
       );
@@ -1457,54 +1464,20 @@ export class ViewTabComponent implements OnInit {
           break;
         }
       }
-      // 引入阿里图标库 svg icon 外链式需特殊处理 symbol
+      // 引入阿里图标库 svg icon 外链式需转化为内嵌式【特殊处理 symbol代替use】
       if (component.tagName == 'svg') {
+        console.log(component);
+        let div = document.createElement('div');
+        div.style.display = 'inline-flex';
+        let copySvg = component.cloneNode(true);
+        div.appendChild(copySvg);
+        component.replaceWith(div);
         let use = component.children[0];
         let link = use.getAttribute('xlink:href');
         let symbol = document.querySelector(`symbol[id=${link.slice(1)}]`);
-        let newSvg = document.createElementNS(
-          'http://www.w3.org/2000/svg',
-          'svg'
-        );
-        newSvg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
-        newSvg.setAttribute('viewBox', '0 0 1024 1024');
-        newSvg.setAttribute('class', 'icon');
-        newSvg.setAttribute('version', '1.1');
-        newSvg.innerHTML = symbol.innerHTML;
-        const src = `data:image/svg+xml;base64,${window.btoa(
-          new XMLSerializer().serializeToString(newSvg)
-        )}`; // base64转化
-        const img = new Image(); // 图片容器承载过渡
-        img.src = src;
-        img.setAttribute('class', 'icon');
-        // // 图片创建后再执行，转Base64过程
-        // const canvas = document.createElement('canvas');
-        // canvas.width = img.width;
-        // canvas.height = img.height;
-        // const context = canvas.getContext('2d');
-        // context.drawImage(img, 0, 0);
-        // const ImgBase64 = canvas.toDataURL('image/png');
-        console.log('Svg 转 png', src);
-        let base = src,
-          fontSize = Number(component.style['font-size'].slice(0, -2));
-        Object.assign(mode, {
-          img: {
-            base,
-            width: fontSize,
-            height: fontSize,
-          },
-        });
-        this.focusNode = this.graph.addItem('node', { ...mode });
-        // this.focusNode.toFront();
-        let parentCombo = this.graph.findById(
-          this.focusNode._cfg.model.comboId
-        );
-        if (parentCombo) {
-          this.graph.refreshItem(parentCombo);
-        }
-        console.log('this.focusNode', this.focusNode, parentCombo);
-        this.focus(this.focusNode);
-        return;
+        copySvg.setAttribute('viewBox', symbol.getAttribute('viewBox'));
+        copySvg.innerHTML = symbol.innerHTML;
+        component = div;
       }
       // html2canvas 实时解析dom生成canvas,由于echarts 等图有渲染动画，因此需延迟生成图片
       // @ts-ignore
@@ -1638,5 +1611,11 @@ export class ViewTabComponent implements OnInit {
           this.publishIsVisible = false;
         }
       });
+  }
+  addItem(input: HTMLInputElement, list): void {
+    const value = input.value;
+    if (list.indexOf(value) === -1 && input.value) {
+      list.push(value);
+    }
   }
 }

@@ -29,6 +29,7 @@ export class MenuTabComponent implements OnInit {
   menuConfig = [];
   constructor(private service: CommunicationService) {}
   showComponentDialog() {
+    this.getComponentConfig();
     this.componentDialog = true;
   }
   getComponentConfig() {
@@ -103,7 +104,6 @@ export class MenuTabComponent implements OnInit {
   }
   ngOnInit(): void {
     this.getMenuList();
-    this.getComponentConfig();
   }
   menuConfigKeys() {
     return Object.keys(this.menuConfig);

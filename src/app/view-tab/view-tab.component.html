@@ -70,13 +70,35 @@
         </p>
         <p>
           赋值:
-          <nz-select [(ngModel)]="key" style="width: 150px">
+          <!-- api接口 数据赋值是需要动态可添加的 -->
+          <nz-select
+            style="width: 150px"
+            [(ngModel)]="key"
+            nzShowSearch
+            nzAllowClear
+            [nzDropdownRender]="renderTemplate"
+          >
             <nz-option
-              [nzValue]="item"
-              [nzLabel]="item"
               *ngFor="let item of sourceData"
+              [nzLabel]="item"
+              [nzValue]="item"
             ></nz-option>
           </nz-select>
+          <ng-template #renderTemplate>
+            <nz-divider></nz-divider>
+            <div class="container" style="display: flex; align-items: center">
+              <input
+                type="text"
+                nz-input
+                #inputElement
+                style="margin: 4px 6px 0 4px"
+              />
+              <a class="add-item" (click)="addItem(inputElement, sourceData)">
+                <span nz-icon nzType="plus"></span>
+              </a>
+            </div>
+          </ng-template>
+          <!-- api接口 数据赋值是需要动态可添加的 -->
           <span> => </span>
           <nz-select [(ngModel)]="value" style="width: 150px">
             <nz-option

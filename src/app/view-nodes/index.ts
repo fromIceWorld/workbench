@@ -5,6 +5,7 @@ export * from './custom-combo';
 export * from './default-node';
 export * from './dialog/index';
 export * from './form/base-form';
+export * from './hook';
 export * from './input';
 export * from './layout/container';
 export * from './node/base';

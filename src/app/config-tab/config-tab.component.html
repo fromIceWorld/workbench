@@ -30,13 +30,19 @@
       </nz-select>
     </span>
     <span *ngIf="html[key].type === 'list'">
+      label:value<br />
+      label[value == label]<br />
       <nz-tag
         *ngFor="let tag of html[key].options; let i = index"
-        [nzMode]="html[key].value === tag ? 'default' : 'closeable'"
+        [nzMode]="
+          html[key].value == (tag.split(':')[1] || tag.split(':')[0])
+            ? 'default'
+            : 'closeable'
+        "
         (click)="checkTag(tag, html[key])"
         (nzOnClose)="handleClose(tag, html[key], 'options')"
       >
-        {{ sliceTagName(tag) }}
+        {{ tag }}
       </nz-tag>
       <nz-tag
         *ngIf="!inputVisible"
@@ -125,6 +131,9 @@
           </svg>
         </label>
       </nz-radio-group>
+    </span>
+    <span *ngIf="html[key].type === 'note'">
+      {{ html[key].value }}
     </span>
   </div>
   <p>样式</p>

@@ -3,9 +3,9 @@ import { measureText } from './node/base/index.js';
 
 // 独属于每一个节点的render函数，在G6中会被抹除，通过原型保存
 
-function registerAPI() {
+function registerHook() {
   G6.registerNode(
-    'api',
+    'hook',
     {
       options: {
         myName: 'text',
@@ -32,26 +32,26 @@ function registerAPI() {
         });
       },
       afterDraw(cfg, group) {
-        const name = '🕸',
+        const name = '🕒',
           width = measureText(name, '14px');
         group.addShape('text', {
           id: 'text',
           attrs: {
             text: name,
-            x: -(width + 30) / 2 + 12,
+            x: -(width + 30) / 2 + 8,
             y: 2,
             fontSize: 24,
             textAlign: 'start',
             textBaseline: 'middle',
-            fill: '#fa5235',
+            fill: '#c0c059',
           },
           name: 'center-shape',
         });
         group.addShape('text', {
           id: 'text',
           attrs: {
-            text: 'api',
-            x: -(width + 30) / 2 + 16,
+            text: 'hook',
+            x: -(width + 30) / 2 + 12,
             y: 20,
             fontSize: 10,
             textAlign: 'start',
@@ -104,4 +104,4 @@ function registerAPI() {
     'circle'
   );
 }
-export { registerAPI };
+export { registerHook };

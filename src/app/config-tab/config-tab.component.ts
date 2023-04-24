@@ -58,8 +58,9 @@ export class ConfigTabComponent implements OnInit {
     this.updateConfig();
   }
   checkTag(tag, origin) {
-    origin.value = tag;
-    // this.updatePoint.emit(this.config);
+    let [label, value] = tag.split(':');
+    origin.value = value || label;
+    this.updateConfig();
   }
   ngOnInit(): void {}
   inputVisible = false;
@@ -70,10 +71,10 @@ export class ConfigTabComponent implements OnInit {
     arr[key] = arr[key].filter((tag) => tag !== removedTag);
     this.updateConfig();
   }
-
+  // label:value
   sliceTagName(tag: string): string {
-    const isLongTag = tag.length > 20;
-    return isLongTag ? `${tag.slice(0, 20)}...` : tag;
+    let [label, value] = tag.split(':');
+    return label;
   }
 
   showInput(): void {
