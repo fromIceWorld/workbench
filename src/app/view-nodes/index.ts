@@ -8,6 +8,7 @@ export * from './form/base-form';
 export * from './hook';
 export * from './input';
 export * from './layout/container';
+export * from './message';
 export * from './node/base';
 export * from './radio';
 export * from './scaleX';

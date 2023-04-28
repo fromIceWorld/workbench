@@ -22,6 +22,7 @@ import {
   registerDialog,
   registerHook,
   registerInput,
+  registerMessage,
   registerRadio,
   registerScaleX,
   registerScaleY,
@@ -272,6 +273,7 @@ export class ViewTabComponent implements OnInit {
     registrForm();
     registerHook();
     registerCommon();
+    registerMessage();
   }
   renderScale() {
     const width = 1920,
@@ -787,9 +789,10 @@ export class ViewTabComponent implements OnInit {
       css,
       className,
     });
-    const [origin, start, end] = s.match(
-      /^(\<[a-z-0-9 ="';:#.%]+\>[\s\S]*)(\<\/([a-z-0-9]+)\>)$/
+    const [origin, start, end, tagName] = s.match(
+      /^(\<[a-z-0-9 _="';:#.%]+\>[\s\S]*)(\<\/([a-z-0-9]+)\>)$/
     );
+    this.idMapTag.set(combo._cfg.id.split('-')[1], tagName);
     htmlString += start;
     scriptString += js;
     // 依顺序
@@ -1418,7 +1421,10 @@ export class ViewTabComponent implements OnInit {
               id: 'view' + '-' + String(UUID),
             });
             if (view & NodePosition.view) {
-              that.graph.createCombo({ ...config, type: 'container' }, []);
+              that.graph.createCombo(
+                { ...config, type: nodeType || 'container' },
+                []
+              );
             }
             if (view & NodePosition.relation) {
               that.relationshipGraph.addItem('node', {
