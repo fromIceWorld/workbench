@@ -97,7 +97,7 @@ function registerText() {
           }
         });
         textShape.attr({
-          // text: text,
+          text: text,
           fill: color,
         });
         box.attr({

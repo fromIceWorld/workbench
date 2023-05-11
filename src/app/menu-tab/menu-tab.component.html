@@ -127,7 +127,7 @@
   (nzOnCancel)="componentDialog = false"
 >
   <ng-container *nzModalContent [ngStyle]="{ width: '800px' }">
-    <nz-table nzSize="small">
+    <nz-table [nzData]="componentList" nzSize="small">
       <thead>
         <tr>
           <th>配置名称</th>

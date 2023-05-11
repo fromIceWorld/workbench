@@ -232,7 +232,7 @@
         nzType="split-cells"
         nzTheme="outline"
         [ngStyle]="{
-          color: css['style']['flex-direction'] == 'row' ? 'red' : '#252525'
+          color: css['style']['display'] == 'inline-block' ? 'red' : '#252525'
         }"
         (click)="changeFlex($event, 'row')"
       ></i>
@@ -241,7 +241,7 @@
         nzType="column-height"
         nzTheme="outline"
         [ngStyle]="{
-          color: css['style']['flex-direction'] == 'column' ? 'red' : '#252525'
+          color: css['style']['display'] == 'block' ? 'red' : '#252525'
         }"
         (click)="changeFlex($event, 'col')"
         style="cursor: pointer"

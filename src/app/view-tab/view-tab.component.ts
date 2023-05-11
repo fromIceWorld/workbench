@@ -234,6 +234,9 @@ export class ViewTabComponent implements OnInit {
   method = '';
   hook = '';
   idMapTag: Map<string, string> = new Map();
+  // 导出的 html js 字符串
+  html = '';
+  js = '';
   constructor(
     private cd: ChangeDetectorRef,
     private service: CommunicationService,
@@ -396,37 +399,12 @@ export class ViewTabComponent implements OnInit {
   }
   // 导出数据
   exportData() {
+    this.html = '';
+    this.js = '';
+    this.layout();
+    console.log(this.html, this.js);
     this.logicHash = Math.random();
     this.getScriptConfig();
-    // 节点数据
-    const nodes = this.graph.getNodes(),
-      combos = this.graph.getCombos();
-    console.log(nodes, combos);
-    // 获取第一层节点
-    let topNodes = nodes.filter((node) => !node._cfg.model.comboId);
-    let topCombos = combos.filter((combo) => !combo._cfg.model.parentId);
-    // 第一层 限定只有一个 combo
-    let sortKey =
-      topCombos[0] && topCombos[0]._cfg.model.config.css.style[''] == 'row'
-        ? 'x'
-        : 'y';
-    let [html, js] = [...topNodes, ...topCombos]
-      .sort((a, b) => a._cfg.model[sortKey] - b._cfg.model[sortKey])
-      .map((item) => {
-        if (item._cfg.type === 'combo') {
-          return this.exportCombo(item);
-        } else {
-          return this.exportNode(item);
-        }
-      })
-      .reduce(
-        (pre, cur) => {
-          let [htmlString, jsString] = pre,
-            { html, js } = cur;
-          return [htmlString + html, jsString + js];
-        },
-        ['', '']
-      );
     // 连线数据
     const edges = this.relationshipGraph.getEdges().map((edge) => {
       const { source, target, label, edgeType } = edge._cfg.model;
@@ -501,8 +479,153 @@ export class ViewTabComponent implements OnInit {
         }
       })
       .join();
-    this.htmlS = html;
-    this.businessCodeJS = `${js};${jsString}`;
+    this.js += `;${jsString}`;
+  }
+  layout() {
+    let nodes = this.graph.getNodes(),
+      xStart = Infinity,
+      xEnd = -Infinity;
+    nodes.forEach((node) => {
+      const { x, y, img } = node._cfg.model,
+        { width, height } = img;
+      xStart = Math.min(xStart, x);
+      xEnd = Math.max(xEnd, x + width);
+    });
+    this.html += '<div>';
+    // y轴布局
+    this.layoutY(xStart, xEnd, nodes);
+    this.html += '</div>';
+  }
+  layoutX(parentXSatrt, parentXEnd, nodes) {
+    // x轴分区
+    let xArea = [];
+    let nodesXstart = Infinity,
+      nodeXEnd = -Infinity;
+    nodes.forEach((node) => {
+      const { x, img } = node._cfg.model,
+        { width } = img;
+      nodesXstart = Math.min(nodesXstart, x);
+      nodeXEnd = Math.max(nodeXEnd, x + width);
+      let xStart = x,
+        xEnd = x + width,
+        newArea = [xStart, xEnd],
+        index = xArea.length - 1,
+        has = false;
+      while (index >= 0) {
+        let [start, end] = xArea[index];
+        if (xStart > end) {
+          newArea['nodes'] = [node];
+          xArea.splice(index + 1, 0, newArea);
+          has = true;
+          break;
+        } else if (
+          (xStart >= start && xStart <= end) ||
+          (xEnd <= end && xEnd >= start)
+        ) {
+          xArea[index][0] = Math.min(start, xStart);
+          xArea[index][1] = Math.max(end, xEnd);
+          xArea[index]['nodes'].push(node);
+          has = true;
+          break;
+        }
+        index--;
+        xArea.sort((a, b) => a[0] - b[0]);
+      }
+      if (!has) {
+        newArea['nodes'] = [node];
+        xArea.unshift(newArea);
+      }
+    });
+    let direction =
+      nodesXstart - parentXSatrt > parentXEnd - nodeXEnd
+        ? 'flex-end'
+        : 'flex-start';
+    this.html += `<div style="display:flex;justify-content:${direction}"}>`;
+    // let direction =
+    //   nodesXstart - parentXSatrt > parentXEnd - nodeXEnd
+    //     ? 'display:flex;justify-content:flex-end'
+    //     : '';
+    // this.html += `<div${direction ? 'style="' + direction + '"' : ''}>`;
+    // 递归Y布局
+    xArea.forEach((area, index) => {
+      let style = '',
+        [leftX, rightX] = area;
+      if (index - 1 >= 0) {
+        let preX = xArea[index - 1][1];
+        style += 'margin-left:' + String(leftX - preX) + 'px;';
+      } else {
+        style += 'margin-left:' + String(leftX - parentXSatrt) + 'px;';
+      }
+      this.html += `<div${style ? ' style="' + style + '"' : ''}>`;
+      // x布局
+      // 根据node 的排布确认 x 布局方向；
+      if (area['nodes'].length > 1) {
+        this.layoutY(nodesXstart, nodeXEnd, area['nodes']);
+      } else {
+        let { html, js } = this.exportNode(area['nodes'][0]);
+        this.html += html;
+        this.js += js;
+      }
+      this.html += `</div>\n`;
+    });
+    this.html += `</div>\n`;
+  }
+  layoutY(xSatrt, xEnd, nodes) {
+    let yArea = [];
+    // 拆分node 在y轴上的 层次
+    for (let node of nodes) {
+      const { x, y, img } = node._cfg.model,
+        { width, height } = img;
+      let yStart = y,
+        yEnd = y + height,
+        newArea = [yStart, yEnd],
+        index = yArea.length - 1,
+        has = false;
+      while (index >= 0) {
+        let [start, end] = yArea[index];
+        if (yStart > end) {
+          newArea['nodes'] = [node];
+          yArea.splice(index + 1, 0, newArea);
+          has = true;
+          break;
+        } else if (
+          (yStart >= start && yStart <= end) ||
+          (yEnd <= end && yEnd >= start)
+        ) {
+          yArea[index][0] = Math.min(start, yStart);
+          yArea[index][1] = Math.max(end, yEnd);
+          yArea[index]['nodes'].push(node);
+          has = true;
+          break;
+        }
+        index--;
+        yArea.sort((a, b) => a[0] - b[0]);
+      }
+      if (!has) {
+        newArea['nodes'] = [node];
+        yArea.unshift(newArea);
+      }
+    }
+    yArea.forEach((area, index) => {
+      let style = '';
+      if (index + 1 < yArea.length) {
+        let curY = yArea[index][1],
+          nextY = yArea[index + 1][0];
+        style += 'margin-bottom:' + (nextY - curY) / 2 + 'px;';
+      }
+      if (index - 1 >= 0) {
+        let curY = yArea[index][0],
+          preY = yArea[index - 1][1];
+        style += 'margin-top:' + (curY - preY) / 2 + 'px;';
+      }
+      this.html += `<div${style ? ' style="' + style + '"' : ''}>`;
+      // x布局
+      // 根据node 的排布确认 x 布局方向；
+      if (area['nodes']) {
+        this.layoutX(xSatrt, xEnd, area['nodes']);
+      }
+      this.html += `</div>\n`;
+    });
   }
   downloadFile() {
     this.exportData();
@@ -511,7 +634,6 @@ export class ViewTabComponent implements OnInit {
       cssString = ``;
     Object.entries(this.originFile).forEach((file: any) => {
       const [name, decorator] = file;
-      console.log(file);
       if (name.endsWith('.js')) {
         scriptString += `<script src="http://localhost:3000/${name}"`;
         Object.entries(decorator || {}).forEach((config) => {
@@ -531,7 +653,7 @@ export class ViewTabComponent implements OnInit {
     let customElementScript = `
       customElements.define('my-component',
         class MyComponent extends HTMLElement{
-          template = \`${this.htmlS}\`;
+          template = \`${this.html}\`;
           constructor(){
             super();
             this.innerHTML = this.template;
@@ -541,9 +663,8 @@ export class ViewTabComponent implements OnInit {
           }
         }
       );
-      ${this.businessCodeJS};
+      ${this.js};
       `;
-    console.log(scriptString, '\n', cssString, '\n', customElementScript);
     // return;
     // 下载 html文件
     let string = `
@@ -583,7 +704,6 @@ export class ViewTabComponent implements OnInit {
     a.click();
     a.remove();
     URL.revokeObjectURL(href);
-    console.log('组件源文件', this.originFile);
     return;
   }
   publishAPP() {
@@ -617,7 +737,6 @@ export class ViewTabComponent implements OnInit {
         styles.push(`left: ${minX}px;top:${minY}px`);
       }
     });
-    console.log(nodes, combos, styles);
   }
   // grid 布局解析
   grid() {
@@ -715,7 +834,6 @@ export class ViewTabComponent implements OnInit {
         // width 和 height 的最大公约数;
         let areaWidth = (rowArr['areaWidth'] = areaXEnd - areaXStart),
           areaHeight = (rowArr['areaHeight'] = areaYEnd - areaYStart);
-        console.log(areaWidth, areaHeight);
         lcmWidth = this.lcm(lcmWidth, areaWidth);
         lcmHeight = this.lcm(lcmHeight, areaHeight);
         // 初始化 y轴区间
@@ -733,7 +851,6 @@ export class ViewTabComponent implements OnInit {
       // width 和 height 的最大公约数;
       let areaWidth = (rowArr['areaWidth'] = areaXEnd - areaXStart),
         areaHeight = (rowArr['areaHeight'] = areaYEnd - areaYStart);
-      console.log(areaWidth, areaHeight);
       lcmWidth = this.lcm(lcmWidth, areaWidth);
       lcmHeight = this.lcm(lcmHeight, areaHeight);
     }
@@ -741,15 +858,6 @@ export class ViewTabComponent implements OnInit {
     for (let i = 0; i < cols.length; i++) {
       for (let j = 0; j < cols[i].length; j++) {}
     }
-    console.log(
-      level1Nodes,
-      level1Combos,
-      xArea,
-      yArea,
-      cols,
-      lcmWidth,
-      lcmHeight
-    );
   }
   // 最大公约数
   gcd(a, b) {
@@ -765,7 +873,6 @@ export class ViewTabComponent implements OnInit {
   }
   checkChange(e, index) {
     this.sourceChecked[index] = e;
-    console.log(this.sourceChecked);
   }
   exportCombo(combo) {
     let htmlString = '',
@@ -790,14 +897,16 @@ export class ViewTabComponent implements OnInit {
       className,
     });
     const [origin, start, end, tagName] = s.match(
-      /^(\<[a-z-0-9 _="';:#.%]+\>[\s\S]*)(\<\/([a-z-0-9]+)\>)$/
+      /^(\<[a-zA-Z-0-9 _="';:#.%\n]+\>[\s\S]*)(\<\/([a-z-0-9]+)\>)$/
     );
     this.idMapTag.set(combo._cfg.id.split('-')[1], tagName);
     htmlString += start;
     scriptString += js;
     // 依顺序
     let sortKey =
-      combo._cfg.model.config.css.style['flex-direction'] == 'row' ? 'x' : 'y';
+      combo._cfg.model.config.css.style['display'] == 'inline-block'
+        ? 'x'
+        : 'y';
     [...nodes, ...combos]
       .sort((a, b) => a._cfg.model[sortKey] - b._cfg.model[sortKey])
       .forEach((node) => {
@@ -843,12 +952,11 @@ export class ViewTabComponent implements OnInit {
         padding = this.focusCombo._cfg.model.padding,
         elements = nodes.concat(combos);
       // 根据 x轴，y轴 排序
-      console.log(elements);
       let sortKey = layout == 'row' ? 'x' : 'y';
       elements.sort((a, b) => a._cfg.model[sortKey] - b._cfg.model[sortKey]);
       if (layout == 'row') {
         // 修改combo layout json
-        this.focusCombo._cfg.model.config.css.style['flex-direction'] = 'row';
+        this.focusCombo._cfg.model.config.css.style['display'] = 'inline-block';
         if (elements.length == 0) {
           return;
         }
@@ -868,8 +976,7 @@ export class ViewTabComponent implements OnInit {
         }, {});
       } else {
         // 修改combo layout json
-        this.focusCombo._cfg.model.config.css.style['flex-direction'] =
-          'column';
+        this.focusCombo._cfg.model.config.css.style['display'] = 'block';
         if (elements.length == 0) {
           return;
         }
@@ -910,15 +1017,21 @@ export class ViewTabComponent implements OnInit {
   }
   deepUpdateCombo(target, originX, originY, attr) {
     const { model, bboxCanvasCache } = target._cfg;
-    const { padding } = model;
+    const { config } = model;
+    const css = config.css;
+    let padding = [
+      css['padding-top'].value,
+      css['padding-right'].value,
+      css['padding-bottom'].value,
+      css['padding-left'].value,
+    ];
     const { x, y } = model;
     let { nodes, combos } = target.getChildren();
     if (nodes.length == 0 && combos.length == 0) {
-      console.log(target);
       this.updateComboPosition(
         target,
-        originX + padding[3],
-        originY + padding[0]
+        originX + ((padding && padding[3]) || 0),
+        originY + ((padding && padding[0]) || 0)
       );
       return;
     }
@@ -927,15 +1040,15 @@ export class ViewTabComponent implements OnInit {
       if (type == 'node') {
         this.deepUpdatePosition(
           item,
-          originX + padding[3],
-          originY + padding[0],
+          originX + ((padding && padding[3]) || 0),
+          originY + ((padding && padding[0]) || 0),
           attr
         );
       } else {
         this.deepUpdateCombo(
           item,
-          originX + padding[3],
-          originY + padding[0],
+          originX + ((padding && padding[3]) || 0),
+          originY + ((padding && padding[0]) || 0),
           attr
         );
       }
@@ -974,7 +1087,6 @@ export class ViewTabComponent implements OnInit {
   updateCombo() {
     let { combos, nodes } = this.graph.getComboChildren(this.focusCombo);
     let ids = [...combos, ...nodes].map((item) => item._cfg.id);
-    console.log(ids);
     const model = this.focusCombo._cfg.model;
     const model2 = {
       ...model,
@@ -995,7 +1107,9 @@ export class ViewTabComponent implements OnInit {
     const { js, html } = (window[className] as any).extends(config);
     const tagName = html.match(/\<\/([0-9\-a-z]*)\>$/)[1];
     // 更新图
-    let relationTarget = this.relationshipGraph.findById(model.id);
+    let relationTarget = this.relationshipGraph.findById(
+      model.id.replace('view', 'relation')
+    );
     const model2 = {
       ...model,
       id: model.id,
@@ -1010,10 +1124,9 @@ export class ViewTabComponent implements OnInit {
           ...relationTarget._cfg.model,
           config,
         });
-        this.relationshipGraph.findById(model.id)._cfg.model.config = config;
+        // relationTarget._cfg.model.config = config;
       }
     }
-    console.log(this.focusNode);
     this.graph.refreshPositions();
   }
   ngOnInit() {
@@ -1172,7 +1285,6 @@ export class ViewTabComponent implements OnInit {
       graph.setItemState(e.item, 'showAnchors', false);
     });
     graph.on('edge:click', (e) => {
-      console.log(e.item._cfg.model.label);
       this.newEdge = e.item;
       this.isVisible = true;
       this.isCreate = false;
@@ -1200,8 +1312,6 @@ export class ViewTabComponent implements OnInit {
         );
         this.method = method;
       }
-
-      console.log(e);
     });
     graph.on('node:click', (e) => {
       console.log('ralation', e);
@@ -1245,18 +1355,15 @@ export class ViewTabComponent implements OnInit {
     graph.on('click', (evt) => {
       this.focusCombo = null;
       this.focusNode = null;
-      console.log('画布点击');
       // TODO:配置背景色
     });
     graph.on('node:click', (evt) => {
-      console.log('node点击');
       this.focusCombo = null;
       const { item } = evt,
         { html, css } = item._cfg.model.config;
       this.unFocus(this.focusNode);
       this.focus(item); //focus当前节点
       this.focusNode = item;
-      console.log(this.bus);
       this.bus.center.next({
         html,
         css,
@@ -1265,7 +1372,6 @@ export class ViewTabComponent implements OnInit {
       this.onEdit(false);
     });
     graph.on('combo:click', (evt) => {
-      console.log('combo点击');
       // 展示combo  json 数据
       const { item } = evt,
         { html, css } = item._cfg.model.config;
@@ -1364,7 +1470,6 @@ export class ViewTabComponent implements OnInit {
             component = (that.dragTarget as any).component,
             area = (that.dragTarget as any).area,
             filesName = (that.dragTarget as any).filesName;
-          console.log(component);
           // 阻止默认动作（如打开一些元素的链接）
           event.preventDefault();
           // 将拖动的元素到所选择的放置目标节点中
@@ -1381,7 +1486,6 @@ export class ViewTabComponent implements OnInit {
             area,
             filesName,
           };
-
           if (targetType === 'node') {
             if (view & NodePosition.view) {
               if (nodeType) {
@@ -1410,7 +1514,7 @@ export class ViewTabComponent implements OnInit {
               that.relationshipGraph.addItem('node', {
                 tagName: tagName,
                 ...config,
-                id: 'relation' + '-' + String(UUID) + '-' + '0',
+                id: 'relation' + '-' + String(UUID),
                 type: nodeType || id,
                 label: id,
               });
@@ -1429,7 +1533,7 @@ export class ViewTabComponent implements OnInit {
             if (view & NodePosition.relation) {
               that.relationshipGraph.addItem('node', {
                 ...config,
-                id: 'relation' + '-' + String(UUID) + '-' + '0',
+                id: 'relation' + '-' + String(UUID),
               });
             }
           }
@@ -1450,8 +1554,6 @@ export class ViewTabComponent implements OnInit {
     document.querySelector('app-cache').append(div, css, script);
     // 映射
     setTimeout(() => {
-      console.log('create Component', div);
-
       // 获取真实组件
       // 获取的 dom 是 生成 web component时定义的一个外层，表现形式类似div，宽度默认是100% 在映射到视图区时有空白内容;
       // 强制 web component 内部只有一个根标签，容易获取。
@@ -1472,7 +1574,6 @@ export class ViewTabComponent implements OnInit {
       }
       // 引入阿里图标库 svg icon 外链式需转化为内嵌式【特殊处理 symbol代替use】
       if (component.tagName == 'svg') {
-        console.log(component);
         let div = document.createElement('div');
         div.style.display = 'inline-flex';
         let copySvg = component.cloneNode(true);
@@ -1504,7 +1605,6 @@ export class ViewTabComponent implements OnInit {
         if (parentCombo) {
           this.graph.refreshItem(parentCombo);
         }
-        console.log('this.focusNode', this.focusNode, parentCombo);
         this.focus(this.focusNode);
       });
     }, 1000);
@@ -1530,7 +1630,6 @@ export class ViewTabComponent implements OnInit {
     for (let i = 0; i < backs.length; i++) {
       labels.push([backs[i].value, this.methods[i]]);
     }
-    console.log(this.newEdge._cfg.model);
     // 应用箭头样式
     Object.assign(
       this.newEdge._cfg.model.style,
@@ -1563,7 +1662,6 @@ export class ViewTabComponent implements OnInit {
     }
 
     this.isVisible = false;
-    console.log(this.selectedIndex);
     // this.modalService.openModals[0]._finishDialogClose(); // ng-modal 编译后数据非双向绑定
   }
   getBackStatus() {
