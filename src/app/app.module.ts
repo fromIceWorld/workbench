@@ -1,3 +1,4 @@
+import { DragDropModule } from '@angular/cdk/drag-drop';
 import { HttpClientModule } from '@angular/common/http';
 import { NgModule } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -11,6 +12,7 @@ import { NzInputNumberModule } from 'ng-zorro-antd/input-number';
 import { NzListModule } from 'ng-zorro-antd/list';
 import { NzMessageModule } from 'ng-zorro-antd/message';
 import { NzModalModule } from 'ng-zorro-antd/modal';
+import { NzPaginationModule } from 'ng-zorro-antd/pagination';
 import { NzPopoverModule } from 'ng-zorro-antd/popover';
 import { NzRadioModule } from 'ng-zorro-antd/radio';
 import { NzSelectModule } from 'ng-zorro-antd/select';
@@ -18,6 +20,7 @@ import { NzSwitchModule } from 'ng-zorro-antd/switch';
 import { NzTableModule } from 'ng-zorro-antd/table';
 import { NzTabsModule } from 'ng-zorro-antd/tabs';
 import { NzTagModule } from 'ng-zorro-antd/tag';
+
 import { ConfigTabComponent } from './config-tab/config-tab.component';
 import { EventBusService } from './event-bus.service';
 import { MenuTabComponent } from './menu-tab/menu-tab.component';
@@ -55,6 +58,8 @@ import { WorkbenchComponent } from './workbench/workbench.component';
     NzListModule,
     NzPopoverModule,
     NzMessageModule,
+    DragDropModule,
+    NzPaginationModule,
   ],
   providers: [{ provide: 'bus', useClass: EventBusService }],
   bootstrap: [WorkbenchComponent],

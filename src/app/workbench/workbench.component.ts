@@ -24,6 +24,9 @@ export class WorkbenchComponent implements OnInit {
   publishAPP(e) {
     this.view.publishAPP();
   }
+  gridNode(e) {
+    this.view.gridNode();
+  }
   changeView(e) {
     console.log(this.view.tabView);
     this.view.changeView();

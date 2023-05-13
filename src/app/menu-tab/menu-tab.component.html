@@ -69,6 +69,16 @@
     class="btn"
     (click)="publishAPP($event)"
   ></i>
+  <i
+    title="整理节点"
+    nz-icon
+    nzType="appstore"
+    nzTheme="outline"
+    width="20px"
+    style="color: #2cd2e5"
+    class="btn"
+    (click)="gridNode($event)"
+  ></i>
   <span style="float: right; margin-right: 14px">
     <i
       title="切换视图"
@@ -127,7 +137,12 @@
   (nzOnCancel)="componentDialog = false"
 >
   <ng-container *nzModalContent [ngStyle]="{ width: '800px' }">
-    <nz-table [nzData]="componentList" nzSize="small">
+    <nz-table
+      [nzData]="componentList"
+      [nzPaginationPosition]="'top'"
+      [nzSize]="'small'"
+      (nzPageIndexChange)="pageIndexChange($event)"
+    >
       <thead>
         <tr>
           <th>配置名称</th>
@@ -136,7 +151,7 @@
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let com of componentList">
+        <tr *ngFor="let com of currentPageList">
           <td>{{ com.tagName }}</td>
           <td>{{ com.desc }}</td>
           <td>

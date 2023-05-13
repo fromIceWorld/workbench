@@ -402,7 +402,6 @@ export class ViewTabComponent implements OnInit {
     this.html = '';
     this.js = '';
     this.layout();
-    console.log(this.html, this.js);
     this.logicHash = Math.random();
     this.getScriptConfig();
     // 连线数据
@@ -452,7 +451,7 @@ export class ViewTabComponent implements OnInit {
               sourceDOM.addEventListener('${hook}',()=>{
                 let sourceIns = sourcePath.length ? sourcePath.reduce((pre,key)=>key ? pre[key] : pre,sourceDOM) : sourceDOM,
                     targetIns = targetPath.length ? targetPath.reduce((pre,key)=>key ? pre[key] : pre,targetDOM) : targetDOM;
-                targetIns['${targetData}'] = sourceIns['${sourceData}'];
+                targetIns.${targetData} = sourceIns.${sourceData};
               })
             })();
           `;
@@ -483,18 +482,62 @@ export class ViewTabComponent implements OnInit {
   }
   layout() {
     let nodes = this.graph.getNodes(),
+      combos = this.graph.getCombos(),
       xStart = Infinity,
       xEnd = -Infinity;
+    let hidenNodes = [];
+    combos.forEach((combo) => hidenNodes.push(...combo.getChildren().nodes));
+    // 过滤掉隐藏
+    nodes
+      .filter((node) => !hidenNodes.includes(node))
+      .forEach((node) => {
+        const { x, y, img } = node._cfg.model,
+          { width, height } = img || { width: 0, height: 0 };
+        xStart = Math.min(xStart, x);
+        xEnd = Math.max(xEnd, x + width);
+      });
+    this.html += '<div style="padding: 4px;">';
+    // y轴布局
+    this.layoutY(
+      xStart,
+      xEnd,
+      nodes.filter((node) => !hidenNodes.includes(node))
+    );
+    this.html += '</div>';
+    // 处理combo中的节点，无需布局
+    combos.forEach((combo) => {
+      this.layoutCombo(combo);
+    });
+  }
+  layoutCombo(combo) {
+    let nodes = combo.getChildren().nodes,
+      xStart = Infinity,
+      xEnd = -Infinity;
+    if (nodes.lenght == 0) {
+      return;
+    }
     nodes.forEach((node) => {
       const { x, y, img } = node._cfg.model,
-        { width, height } = img;
+        { width, height } = img || { width: 0, height: 0 };
       xStart = Math.min(xStart, x);
       xEnd = Math.max(xEnd, x + width);
     });
-    this.html += '<div>';
+    let { html, css, component, className } = combo._cfg.model.config;
+    const originClass = window[className];
+    let { html: htmlS, js } = (originClass as any).extends({
+      html,
+      css,
+      className,
+    });
+    const [origin, start, end, tagName] = htmlS.match(
+      /^(\<[a-zA-Z-0-9 _="';:#.%\n]+\>[\s\S]*)(\<\/([a-z-0-9]+)\>)$/
+    );
+    this.idMapTag.set(combo._cfg.id.split('-')[1], tagName);
+    this.html += start;
+    this.js += js;
     // y轴布局
     this.layoutY(xStart, xEnd, nodes);
-    this.html += '</div>';
+    this.html += end;
   }
   layoutX(parentXSatrt, parentXEnd, nodes) {
     // x轴分区
@@ -503,7 +546,7 @@ export class ViewTabComponent implements OnInit {
       nodeXEnd = -Infinity;
     nodes.forEach((node) => {
       const { x, img } = node._cfg.model,
-        { width } = img;
+        { width } = img || { width: 0 };
       nodesXstart = Math.min(nodesXstart, x);
       nodeXEnd = Math.max(nodeXEnd, x + width);
       let xStart = x,
@@ -540,7 +583,7 @@ export class ViewTabComponent implements OnInit {
       nodesXstart - parentXSatrt > parentXEnd - nodeXEnd
         ? 'flex-end'
         : 'flex-start';
-    this.html += `<div style="display:flex;justify-content:${direction}"}>`;
+    this.html += `<div style="padding: 4px;display:flex;flex-wrap:wrap;justify-content:${direction}">`;
     // let direction =
     //   nodesXstart - parentXSatrt > parentXEnd - nodeXEnd
     //     ? 'display:flex;justify-content:flex-end'
@@ -552,9 +595,9 @@ export class ViewTabComponent implements OnInit {
         [leftX, rightX] = area;
       if (index - 1 >= 0) {
         let preX = xArea[index - 1][1];
-        style += 'margin-left:' + String(leftX - preX) + 'px;';
+        style += 'margin-left:' + String(leftX - preX - 4) + 'px;';
       } else {
-        style += 'margin-left:' + String(leftX - parentXSatrt) + 'px;';
+        style += 'margin-left:' + String(leftX - parentXSatrt - 4) + 'px;';
       }
       this.html += `<div${style ? ' style="' + style + '"' : ''}>`;
       // x布局
@@ -575,7 +618,7 @@ export class ViewTabComponent implements OnInit {
     // 拆分node 在y轴上的 层次
     for (let node of nodes) {
       const { x, y, img } = node._cfg.model,
-        { width, height } = img;
+        { width, height } = img || { width: 0, height: 0 };
       let yStart = y,
         yEnd = y + height,
         newArea = [yStart, yEnd],
@@ -611,12 +654,12 @@ export class ViewTabComponent implements OnInit {
       if (index + 1 < yArea.length) {
         let curY = yArea[index][1],
           nextY = yArea[index + 1][0];
-        style += 'margin-bottom:' + (nextY - curY) / 2 + 'px;';
+        style += 'margin-bottom:' + ((nextY - curY) / 2 - 4) + 'px;';
       }
       if (index - 1 >= 0) {
         let curY = yArea[index][0],
           preY = yArea[index - 1][1];
-        style += 'margin-top:' + (curY - preY) / 2 + 'px;';
+        style += 'margin-top:' + ((curY - preY) / 2 - 4) + 'px;';
       }
       this.html += `<div${style ? ' style="' + style + '"' : ''}>`;
       // x布局
@@ -711,6 +754,20 @@ export class ViewTabComponent implements OnInit {
     this.publishIsVisible = true;
     // 展示 组件需要的 script配置;
   }
+  //整理节点，使关系节点和视图节点排布匹配
+  gridNode() {
+    console.log('整理节点');
+    const relationNodes = this.relationshipGraph.getNodes();
+    relationNodes.forEach((node) => {
+      const id = node._cfg.id.split('-')[1];
+      const viewNode = this.graph.findById(`view-${id}`),
+        { x, y, img } = viewNode._cfg.model;
+      node.updatePosition({
+        x: x + ((img && img.width / 2) || 0),
+        y: y + ((img && img.height / 2) || 0),
+      });
+    });
+  }
   absoluteLayout() {
     let styles = [];
     const nodes = this.graph.getNodes(),
@@ -799,7 +856,7 @@ export class ViewTabComponent implements OnInit {
           if (!model.img) {
             return;
           }
-          const { width, height } = model.img,
+          const { width, height } = model.img || { width: 0, height: 0 },
             y = model.y,
             x = model.x,
             minX = x - width / 2,
@@ -877,19 +934,9 @@ export class ViewTabComponent implements OnInit {
   exportCombo(combo) {
     let htmlString = '',
       scriptString = '',
-      { area, filesName } = combo._cfg.model,
-      { html, css, component, className } = combo._cfg.model.config,
-      // { nodes, combos } = combo.getChildren();
-      { nodes: allNodes, combos: allCombos } = combo.getChildren();
-    let nodes = allNodes.filter(
-        (node) => !node.destroyed && node._cfg.model.comboId == combo._cfg.id
-      ),
-      combos = allCombos.filter(
-        (com) => com._cfg.model.parentId == combo._cfg.id
-      );
+      { html, css, component, className } = combo._cfg.model.config;
     // 建立 node id与tagName的映射
     const originClass = window[className];
-
     //  导出当前combo数据
     let { html: s, js } = (originClass as any).extends({
       html,
@@ -902,22 +949,7 @@ export class ViewTabComponent implements OnInit {
     this.idMapTag.set(combo._cfg.id.split('-')[1], tagName);
     htmlString += start;
     scriptString += js;
-    // 依顺序
-    let sortKey =
-      combo._cfg.model.config.css.style['display'] == 'inline-block'
-        ? 'x'
-        : 'y';
-    [...nodes, ...combos]
-      .sort((a, b) => a._cfg.model[sortKey] - b._cfg.model[sortKey])
-      .forEach((node) => {
-        let { html, js } =
-          node._cfg.type === 'node'
-            ? this.exportNode(node)
-            : this.exportCombo(node);
-        htmlString += html;
-        scriptString += js;
-      });
-    htmlString += end;
+
     return {
       html: htmlString,
       js: scriptString,
@@ -1480,6 +1512,7 @@ export class ViewTabComponent implements OnInit {
           let tagName = html.match(/\<\/([0-9\-a-z]*)\>$/)[1];
           const UUID = Math.random();
           let config = {
+            tagName,
             x: targetX,
             y: targetY,
             config: nodeSetting,
@@ -1490,7 +1523,6 @@ export class ViewTabComponent implements OnInit {
             if (view & NodePosition.view) {
               if (nodeType) {
                 that.focusNode = that.graph.addItem('node', {
-                  tagName: tagName,
                   ...config,
                   id: 'view' + '-' + String(UUID),
                   type: nodeType || 'common',
@@ -1500,7 +1532,6 @@ export class ViewTabComponent implements OnInit {
                 that.createElement(
                   html,
                   {
-                    tagName: tagName,
                     ...config,
                     id: 'view' + '-' + String(UUID),
                     type: nodeType || 'common',
@@ -1512,7 +1543,6 @@ export class ViewTabComponent implements OnInit {
             }
             if (view & NodePosition.relation) {
               that.relationshipGraph.addItem('node', {
-                tagName: tagName,
                 ...config,
                 id: 'relation' + '-' + String(UUID),
                 type: nodeType || id,
@@ -1553,61 +1583,65 @@ export class ViewTabComponent implements OnInit {
     // css.innerHTML = `${tagName}{display:inline-block}`;
     document.querySelector('app-cache').append(div, css, script);
     // 映射
-    setTimeout(() => {
-      // 获取真实组件
-      // 获取的 dom 是 生成 web component时定义的一个外层，表现形式类似div，宽度默认是100% 在映射到视图区时有空白内容;
-      // 强制 web component 内部只有一个根标签，容易获取。
-      // Angular 可直接获取子节点。
-      // Vue 有一层 shadowRoot包裹，需要更深入取值。
-      let component, children;
-      if (div.shadowRoot) {
-        children = div.shadowRoot.children;
-      } else {
-        children = div.children;
-      }
-      for (let node of children) {
-        let tagName = node.tagName;
-        if (!['STYLE', 'SCRIPT'].includes(tagName)) {
-          component = node;
-          break;
+    setTimeout(
+      () => {
+        // 获取真实组件
+        // 获取的 dom 是 生成 web component时定义的一个外层，表现形式类似div，宽度默认是100% 在映射到视图区时有空白内容;
+        // 强制 web component 内部只有一个根标签，容易获取。
+        // Angular 可直接获取子节点。
+        // Vue 有一层 shadowRoot包裹，需要更深入取值。
+        let component, children;
+        if (div.shadowRoot) {
+          children = div.shadowRoot.children;
+        } else {
+          children = div.children;
         }
-      }
-      // 引入阿里图标库 svg icon 外链式需转化为内嵌式【特殊处理 symbol代替use】
-      if (component.tagName == 'svg') {
-        let div = document.createElement('div');
-        div.style.display = 'inline-flex';
-        let copySvg = component.cloneNode(true);
-        div.appendChild(copySvg);
-        component.replaceWith(div);
-        let use = component.children[0];
-        let link = use.getAttribute('xlink:href');
-        let symbol = document.querySelector(`symbol[id=${link.slice(1)}]`);
-        copySvg.setAttribute('viewBox', symbol.getAttribute('viewBox'));
-        copySvg.innerHTML = symbol.innerHTML;
-        component = div;
-      }
-      // html2canvas 实时解析dom生成canvas,由于echarts 等图有渲染动画，因此需延迟生成图片
-      // @ts-ignore
-      html2canvas(component).then((canvas) => {
-        let base = canvas.toDataURL('img');
-        Object.assign(mode, {
-          img: {
-            base,
-            width: component.offsetWidth,
-            height: component.offsetHeight,
-          },
+        for (let node of children) {
+          let tagName = node.tagName;
+          if (!['STYLE', 'SCRIPT'].includes(tagName)) {
+            component = node;
+            break;
+          }
+        }
+        // 引入阿里图标库 svg icon 外链式需转化为内嵌式【特殊处理 symbol代替use】
+        if (component.tagName == 'svg') {
+          let div = document.createElement('div');
+          div.style.display = 'inline-flex';
+          let copySvg = component.cloneNode(true);
+          div.appendChild(copySvg);
+          component.replaceWith(div);
+          let use = component.children[0];
+          let link = use.getAttribute('xlink:href');
+          let symbol = document.querySelector(`symbol[id=${link.slice(1)}]`);
+          copySvg.setAttribute('viewBox', symbol.getAttribute('viewBox'));
+          copySvg.innerHTML = symbol.innerHTML;
+          component = div;
+        }
+        // html2canvas 实时解析dom生成canvas,由于echarts 等图有渲染动画，因此需延迟生成图片
+        // @ts-ignore
+        html2canvas(component).then((canvas) => {
+          let base = canvas.toDataURL('img');
+          Object.assign(mode, {
+            img: {
+              base,
+              width: component.offsetWidth,
+              height: component.offsetHeight,
+            },
+          });
+          this.focusNode = this.graph.addItem('node', { ...mode });
+          // this.focusNode.toFront();
+          let parentCombo = this.graph.findById(
+            this.focusNode._cfg.model.comboId
+          );
+          if (parentCombo) {
+            this.graph.refreshItem(parentCombo);
+          }
+          this.focus(this.focusNode);
         });
-        this.focusNode = this.graph.addItem('node', { ...mode });
-        // this.focusNode.toFront();
-        let parentCombo = this.graph.findById(
-          this.focusNode._cfg.model.comboId
-        );
-        if (parentCombo) {
-          this.graph.refreshItem(parentCombo);
-        }
-        this.focus(this.focusNode);
-      });
-    }, 1000);
+      },
+      // 携带chart的组件是图表组件，有动画效果，需延迟解析
+      tagName.includes('-chart-') ? 1000 : 0
+    );
   }
   handleCancel() {
     if (this.isCreate) {
@@ -1685,7 +1719,7 @@ export class ViewTabComponent implements OnInit {
     let defineComponent = `
     customElements.define('${this.tagName}',
       class MyComponent extends HTMLElement{
-        template = \`${this.htmlS}\`;
+        template = \`${this.html}\`;
         constructor(){
           super();
           this.innerHTML = this.template;
@@ -1695,9 +1729,8 @@ export class ViewTabComponent implements OnInit {
     //定义web component  组件逻辑
     let jsContent = `
     ${defineComponent}
-    ${this.businessCodeJS}
+    ${this.js}
     `;
-    console.log(files, this.tagName, jsContent);
     this.service
       .publishApplication({
         appName: this.appName,
@@ -1713,6 +1746,7 @@ export class ViewTabComponent implements OnInit {
         const { code, data } = res;
         if (code == 200) {
           this.publishIsVisible = false;
+          this.message.create('success', `发布组件成功:${this.tagName}`);
         }
       });
   }

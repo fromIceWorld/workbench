@@ -65,6 +65,100 @@
         (keydown.enter)="handleInputConfirm(html[key], 'options')"
       />
     </span>
+    <span *ngIf="html[key].type === 'headers'">
+      <button
+        nz-button
+        (click)="addHeaders(html[key].options)"
+        nzType="primary"
+      >
+        +
+      </button>
+      <nz-table
+        #editRowTable
+        nzBordered
+        nzSize="small"
+        [nzData]="html[key].options"
+        [nzFrontPagination]="false"
+        [nzShowPagination]="false"
+      >
+        <thead>
+          <tr>
+            <th>label</th>
+            <th>key</th>
+            <th>width</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody
+          cdkDropList
+          (cdkDropListDropped)="drop($event, html[key].options)"
+        >
+          <tr *ngFor="let tag of html[key].options; let i = index" cdkDrag>
+            <td>
+              <div
+                class="editable-cell"
+                [hidden]="editIndex === i"
+                (click)="editIndex = i"
+              >
+                {{ tag.label }}
+              </div>
+              <input
+                [hidden]="editIndex !== i"
+                type="text"
+                nz-input
+                [(ngModel)]="tag.label"
+                (focus)="updateFocus($event)"
+                (blur)="updateTable()"
+              />
+            </td>
+            <td>
+              <div
+                class="editable-cell"
+                [hidden]="editIndex === i"
+                (click)="editIndex = i"
+              >
+                {{ tag.key }}
+              </div>
+              <input
+                [hidden]="editIndex !== i"
+                type="text"
+                nz-input
+                [(ngModel)]="tag.key"
+                (focus)="updateFocus($event)"
+                (blur)="updateTable()"
+              />
+            </td>
+            <td>
+              <div
+                class="editable-cell"
+                [hidden]="editIndex === i"
+                (click)="editIndex = i"
+              >
+                {{ tag.width }}
+              </div>
+              <input
+                [hidden]="editIndex !== i"
+                type="text"
+                nz-input
+                [(ngModel)]="tag.width"
+                (focus)="updateFocus($event)"
+                (blur)="updateTable()"
+              />
+            </td>
+            <td>
+              <a (click)="deleteItem(html[key].options, i)"
+                ><span
+                  nz-icon
+                  nzType="delete"
+                  nzTheme="outline"
+                  style="color: red"
+                ></span
+              ></a>
+            </td>
+          </tr>
+        </tbody>
+      </nz-table>
+    </span>
     <span *ngIf="html[key].type === 'string'">
       <nz-input-group [nzSuffix]="inputClearTpl">
         <input
@@ -193,6 +287,7 @@
         (keydown.enter)="handleInputConfirm(css[key], 'options')"
       />
     </span>
+
     <span *ngIf="css[key].type === 'string'">
       <nz-input-group [nzSuffix]="inputClearTpl">
         <input

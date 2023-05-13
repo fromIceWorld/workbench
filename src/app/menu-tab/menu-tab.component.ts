@@ -15,19 +15,24 @@ export class MenuTabComponent implements OnInit {
   @Output() recover = new EventEmitter();
   @Output() downloadEmit = new EventEmitter();
   @Output() publish = new EventEmitter();
+  @Output() grid = new EventEmitter();
   @Output() change = new EventEmitter();
   cacheVisible = false;
   ViewTypes = ViewTypes;
   cacheDialog = false;
   componentDialog = false;
   componentList = [];
+  current;
   configParams = {
     tagName: '',
     desc: '',
   };
   viewType: ViewTypes = ViewTypes.view;
   menuConfig = [];
+  pageIndex = 1;
+  currentPageList = [];
   constructor(private service: CommunicationService) {}
+
   showComponentDialog() {
     this.getComponentConfig();
     this.componentDialog = true;
@@ -37,6 +42,7 @@ export class MenuTabComponent implements OnInit {
       const { code, data } = res;
       if (code == 200) {
         this.componentList = data;
+        this.currentPageList = this.componentList.slice(0, 10);
       }
     });
   }
@@ -94,6 +100,14 @@ export class MenuTabComponent implements OnInit {
     });
     this.cacheVisible = false;
   }
+  pageIndexChange(index) {
+    console.log(index);
+    this.pageIndex = index;
+    this.currentPageList = this.componentList.slice(
+      (index - 1) * 10,
+      index * 10
+    );
+  }
   download(e) {
     this.downloadEmit.emit();
   }
@@ -111,6 +125,10 @@ export class MenuTabComponent implements OnInit {
   //发布应用
   publishAPP(e) {
     this.publish.emit();
+  }
+  //整理节点
+  gridNode(e) {
+    this.grid.emit();
   }
   apply(e, item) {
     const { json } = item;

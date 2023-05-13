@@ -1,3 +1,4 @@
+import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
 import {
   Component,
   ElementRef,
@@ -14,6 +15,7 @@ import {
 export class ConfigTabComponent implements OnInit {
   html = {};
   css = {};
+  editIndex;
   constructor(@Inject('bus') private bus) {
     console.log('初始化接收');
     this.bus.center.subscribe((res: any) => {
@@ -24,6 +26,21 @@ export class ConfigTabComponent implements OnInit {
         console.log(html, css, type);
       }
     });
+  }
+  addHeaders(options) {
+    options.push({
+      label: 'label',
+      key: 'key',
+      width: '100',
+    });
+  }
+  updateTable() {
+    this.editIndex = null;
+    this.updateBlur(null);
+  }
+  drop(event: CdkDragDrop<string[]>, list): void {
+    moveItemInArray(list, event.previousIndex, event.currentIndex);
+    this.updateBlur(null);
   }
   originKeys(obj) {
     return Object.keys(obj);
@@ -43,6 +60,10 @@ export class ConfigTabComponent implements OnInit {
       type: 'edit',
       value: type,
     });
+  }
+  deleteItem(options, index) {
+    options.splice(index, 1);
+    this.updateBlur(null);
   }
   updateFocus(e) {
     this.bus.center.next({
