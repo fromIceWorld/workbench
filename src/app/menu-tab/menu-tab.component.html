@@ -1,4 +1,14 @@
-<div style="width: 200px; position: fixed; top: 0; left: 0">
+<div
+  style="
+    width: 200px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 3001;
+    background: white;
+    height: -webkit-fill-available;
+  "
+>
   <i
     title="保存数据"
     nz-icon
@@ -7,11 +17,7 @@
     width="20px"
     class="btn"
     style="color: #0093ff"
-    nz-popover
-    [(nzPopoverVisible)]="cacheVisible"
-    nzPopoverTitle="保存配置项"
-    [nzPopoverContent]="contentTemplate"
-    nzPopoverTrigger="click"
+    (click)="cacheVisible = true"
   ></i>
   <ng-template #contentTemplate>
     <div>
@@ -103,8 +109,7 @@
       (click)="changeView($event)"
     ></i>
   </span>
-
-  <div *ngFor="let menu of menuConfig">
+  <div class="menu-tab" *ngFor="let menu of menuConfig">
     <p>{{ menu[0] }}</p>
     <span *ngFor="let btn of menu[1]">
       <i
@@ -117,8 +122,9 @@
         [area]="btn.area"
         [filesName]="btn.filesName"
         [component]="btn.component"
-        [view]="btn.view || 3"
+        [view]="btn.view || 0"
         [node]="btn.node"
+        [layout]="btn.layout"
         nzTheme="outline"
         width="20px"
         [ngStyle]="{ color: btn.color || 'btn' }"
@@ -127,6 +133,41 @@
     </span>
   </div>
 </div>
+<!-- 缓存配置 -->
+<nz-modal
+  [(nzVisible)]="cacheVisible"
+  [nzContent]="cacheTemplate"
+  nzTitle="保存配置项"
+  [nzFooter]="cacheFooter"
+  (nzOnOk)="cacheData($event)"
+  (nzOnCancel)="cacheVisible = false"
+  ><ng-template #cacheTemplate>
+    <div>
+      <p>
+        配置名称：<input
+          nz-input
+          placeholder="请输入配置名称"
+          [(ngModel)]="configParams.tagName"
+        />
+      </p>
+      <p>
+        描述：<textarea
+          rows="4"
+          nz-input
+          placeholder="请输入配置相关描述"
+          [(ngModel)]="configParams.desc"
+        ></textarea>
+      </p>
+    </div>
+  </ng-template>
+  <ng-template #cacheFooter>
+    <button nz-button nzType="primary" (click)="cacheData($event)">
+      <span nz-icon nzType="cloud-upload"></span>
+      保存
+    </button>
+  </ng-template>
+</nz-modal>
+
 <!-- 组件配置列表 -->
 <nz-modal
   [(nzVisible)]="componentDialog"

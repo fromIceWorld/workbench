@@ -41,7 +41,7 @@ export class MenuTabComponent implements OnInit {
     this.service.getComponentConfig().subscribe((res: any) => {
       const { code, data } = res;
       if (code == 200) {
-        this.componentList = data;
+        this.componentList = data.reverse();
         this.currentPageList = this.componentList.slice(0, 10);
       }
     });

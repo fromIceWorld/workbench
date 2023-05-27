@@ -16,6 +16,7 @@ function registerAPI() {
         },
       },
       draw(cfg, group) {
+        debugger;
         const self = this;
         // 获取配置中的 Combo 内边距
         cfg.padding = [5, 5, 5, 5];
@@ -82,24 +83,6 @@ function registerAPI() {
         // });
       },
       // response the state changes and show/hide the link-point circles
-      update(cfg, node) {
-        const name = '★',
-          textLength = measureText(name, '14px'),
-          group = node.getContainer();
-        let textShape, box;
-        group.find((item) => {
-          if (item.get('name') === 'text-shape') {
-            textShape = item;
-          }
-          if (item.get('name') === 'text-border') {
-            box = item;
-          }
-        });
-        textShape.attr('text', name);
-        box.attr({
-          width: textLength + 30,
-        });
-      },
     },
     'circle'
   );

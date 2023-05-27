@@ -20,6 +20,7 @@ import { NzSwitchModule } from 'ng-zorro-antd/switch';
 import { NzTableModule } from 'ng-zorro-antd/table';
 import { NzTabsModule } from 'ng-zorro-antd/tabs';
 import { NzTagModule } from 'ng-zorro-antd/tag';
+import { NzToolTipModule } from 'ng-zorro-antd/tooltip';
 
 import { ConfigTabComponent } from './config-tab/config-tab.component';
 import { EventBusService } from './event-bus.service';
@@ -60,6 +61,7 @@ import { WorkbenchComponent } from './workbench/workbench.component';
     NzMessageModule,
     DragDropModule,
     NzPaginationModule,
+    NzToolTipModule,
   ],
   providers: [{ provide: 'bus', useClass: EventBusService }],
   bootstrap: [WorkbenchComponent],

@@ -39,7 +39,7 @@ function registerText() {
       draw(cfg, group) {
         const self = this,
           { html, css } = cfg.config,
-          text = html.text.value,
+          text = html.value.value,
           fontSize = css['font-size'].value + css['font-size'].postfix;
         // 获取配置中的 Combo 内边距
         cfg.padding = [5, 5, 5, 5];
@@ -60,7 +60,7 @@ function registerText() {
       },
       afterDraw(cfg, group) {
         const { html, css } = cfg.config,
-          text = html.text.value,
+          text = html.value.value,
           fontSize = css['font-size'].value + css['font-size'].postfix,
           color = css['color'].value,
           width = measureText(text, fontSize);
@@ -82,7 +82,7 @@ function registerText() {
       // response the state changes and show/hide the link-point circles
       update(cfg, node) {
         const { html, css } = cfg.config,
-          text = html.text.value,
+          text = html.value.value,
           fontSize = css['font-size'].value + css['font-size'].postfix,
           color = css['color'].value,
           textLength = measureText(text, fontSize),

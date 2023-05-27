@@ -1,6 +1,6 @@
 ::ng-deep .g6-grid-container {
   z-index: 0 !important;
-  inset: 22px 0 0 22px !important;
+  inset: 0 !important;
 }
 ::ng-deep .g6-component-contextmenu {
   z-index: 3;
@@ -26,4 +26,14 @@
   margin-right: 4px;
   font-size: 16px;
   font-weight: 600;
+}
+.dialog {
+  position: fixed;
+  bottom: 0;
+  z-index: 1000;
+  display: flex;
+  flex-wrap: wrap;
+}
+.dialog nz-tag {
+  margin-bottom: 2px;
 }

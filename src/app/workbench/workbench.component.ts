@@ -10,6 +10,7 @@ export class WorkbenchComponent implements OnInit {
   @ViewChild('menu') menu;
   @ViewChild('view') view;
   @ViewChild('config') config;
+  configDialog = false;
   constructor(private bus: EventBusService) {}
   cacheData(e) {
     console.log(e);
@@ -43,5 +44,9 @@ export class WorkbenchComponent implements OnInit {
   }
   changeLayout(e) {
     this.view.changeNodeLayout(e);
+  }
+  onConfig(e) {
+    this.configDialog = e;
+    console.log(e);
   }
 }
