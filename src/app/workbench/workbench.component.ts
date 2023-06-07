@@ -8,7 +8,7 @@ import { EventBusService } from '../event-bus.service';
 })
 export class WorkbenchComponent implements OnInit {
   @ViewChild('menu') menu;
-  @ViewChild('view') view;
+  @ViewChild('view', { static: true }) view;
   @ViewChild('config') config;
   configDialog = false;
   constructor(private bus: EventBusService) {}
@@ -44,6 +44,11 @@ export class WorkbenchComponent implements OnInit {
   }
   changeLayout(e) {
     this.view.changeNodeLayout(e);
+  }
+  displayConfig() {
+    return this.view.tabView === 'design-view' && !this.configDialog
+      ? 'block'
+      : 'none';
   }
   onConfig(e) {
     this.configDialog = e;

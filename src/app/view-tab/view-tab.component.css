@@ -36,4 +36,13 @@
 }
 .dialog nz-tag {
   margin-bottom: 2px;
+  cursor: pointer;
+}
+.area {
+  position: absolute;
+  background-color: #7fffd44d;
+  top: 0;
+  left: 0;
+  width: 0;
+  height: 0;
 }

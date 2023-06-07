@@ -23,7 +23,6 @@ export class ConfigTabComponent implements OnInit {
       if (type === 'config') {
         this.html = html;
         this.css = css;
-        console.log(html, css, type);
       }
     });
   }

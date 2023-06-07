@@ -1,4 +1,10 @@
-<div class="tab-container">
+<div
+  class="tab-container"
+  [ngStyle]="{
+    display:
+      originKeys(html).length + originKeys(css).length == 0 ? 'none' : 'block'
+  }"
+>
   <p>数据:</p>
   <div
     *ngFor="let key of originKeys(html); index as i"
@@ -204,7 +210,7 @@
     <span *ngIf="html[key].type === 'number'">
       <nz-input-number
         [(ngModel)]="html[key].value"
-        [nzMin]="1"
+        [nzMin]="0"
         [nzStep]="1"
         (nzBlur)="updateConfig($event)"
       ></nz-input-number>
@@ -231,6 +237,11 @@
     </span>
   </div>
   <p>样式</p>
+  <nz-alert
+    nzType="warning"
+    nzMessage="width,height只用于组件在画布中的布局占位"
+    style="margin-bottom: 10px"
+  ></nz-alert>
   <div *ngFor="let key of originKeys(css); index as i">
     <span class="label">{{ key }}</span>
     <span *ngIf="css[key].type === 'boolean'">
@@ -312,7 +323,7 @@
     <span *ngIf="css[key].type === 'number'">
       <nz-input-number
         [(ngModel)]="css[key].value"
-        [nzMin]="1"
+        [nzMin]="0"
         [nzStep]="1"
         (nzBlur)="updateConfig($event)"
       ></nz-input-number>

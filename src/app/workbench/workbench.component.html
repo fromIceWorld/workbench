@@ -1,6 +1,5 @@
 <app-menu-tab
   #menu
-  style="width: 200px; float: left"
   (cache)="cacheData($event)"
   (recover)="recoverData($event)"
   (downloadEmit)="downloadFile($event)"
@@ -10,22 +9,15 @@
 ></app-menu-tab>
 <app-view-tab
   #view
-  style="display: block; margin-left: 200px"
+  style="display: block; margin-top: 68px"
   (focusPoint)="setConfig($event)"
   (onConfig)="onConfig($event)"
 ></app-view-tab>
 <app-config-tab
   #config
-  style="
-    top: 0;
-    position: fixed;
-    right: 0;
-    z-index: 10000;
-    background-color: white;
-  "
-  [style]="{
-    display: this.view.tabView === 'design-view' ? 'block' : 'none',
-    'background-color': configDialog ? '#fff' : '#fff0'
+  style="top: 0; position: fixed; right: 0; z-index: 1000"
+  [ngStyle]="{
+    display: displayConfig()
   }"
   (updatePoint)="update($event)"
   (changeLayout)="changeLayout($event)"

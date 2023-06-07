@@ -4,9 +4,9 @@ function registerCommon() {
     'common',
     {
       drawShape: function drawShape(cfg, group) {
-        const { img, x, y } = cfg;
-        let offsetX = x - 20,
-          offsetY = y - 20;
+        console.log('cfg', cfg);
+        const { img, x, y, config } = cfg;
+        const { width, height } = config.css;
         const style = this.getShapeStyle(cfg);
         console.log('cfg', cfg, style);
         group.addShape('image', {
@@ -24,7 +24,7 @@ function registerCommon() {
           // 在 G6 3.3 及之后的版本中，必须指定 name，可以是任意字符串，但需要在同一个自定义元素类型中保持唯一性
           name: 'component',
           draggable: true,
-          zIndex: -1,
+          zIndex: 2,
         });
         // 绘制一个矩形作为 keyShape，与 'rect' Combo 的 keyShape 一致
         const rect = group.addShape('rect', {
@@ -36,14 +36,15 @@ function registerCommon() {
             // x: x - img.width / 2,
             // y: y - img.height / 2,
             stroke: '#fff0',
-            fill: '#fff0',
-            width: img.width,
-            height: img.height,
+            fill: '#00ff0026',
+            width: width.value || img.width,
+            height: height.value || img.height,
           },
           draggable: true,
           name: 'container', // 在 G6 3.3 及之后的版本中，必须指定 name，可以是任意字符串，但需要在同一个自定义元素类型中保持唯一性
-          zIndex: 100,
+          zIndex: 1,
         });
+        group.sort();
         return rect;
       },
       afterUpdate(cfg, node) {

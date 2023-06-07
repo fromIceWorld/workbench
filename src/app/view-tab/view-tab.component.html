@@ -51,6 +51,8 @@
       <span>{{ virtually.tagName }}</span>
     </nz-tag>
   </div>
+  <!-- 辅助线 -->
+  <div class="area" #area></div>
 </div>
 <!-- 连线弹窗 事件 -->
 <nz-modal
@@ -271,21 +273,35 @@
 </div>
 <!-- 弹窗组件配置 -->
 <nz-modal
+  nzMaskClosable="false"
   [nzStyle]="{
     width: cacheNodes.additionalView[indexDialog]
-      ? cacheNodes.additionalView[indexDialog].model.config.css.width.value +
+      ? cacheNodes.additionalView[indexDialog].model.config.html.width.value +
         48 +
         1 +
         'px'
-      : '748px'
+      : '748px',
+    height: cacheNodes.additionalView[indexDialog]
+      ? cacheNodes.additionalView[indexDialog].model.config.html.height.value +
+        48 +
+        1 +
+        'px'
+      : '448px'
   }"
   [nzBodyStyle]="{
+    'overflow-y': 'auto',
     width: cacheNodes.additionalView[indexDialog]
-      ? cacheNodes.additionalView[indexDialog].model.config.css.width.value +
+      ? cacheNodes.additionalView[indexDialog].model.config.html.width.value +
         48 +
         1 +
         'px'
-      : '748px'
+      : '748px',
+    height: cacheNodes.additionalView[indexDialog]
+      ? cacheNodes.additionalView[indexDialog].model.config.html.height.value +
+        48 +
+        1 +
+        'px'
+      : '448px'
   }"
   [(nzVisible)]="dialogConfigVisible"
   [nzTitle]="
@@ -306,12 +322,20 @@
     #dialog
     style="width: 700px; height: 400px; position: relative"
   ></div>
+  <app-config-tab></app-config-tab>
 </ng-template>
 <!-- tabs组件配置 -->
 <nz-modal
   [nzStyle]="{
     width: cacheNodes.normalAndAdditionalView[indexTabs]
-      ? cacheNodes.normalAndAdditionalView[indexTabs].model.config.css.width
+      ? cacheNodes.normalAndAdditionalView[indexTabs].model.config.html.width
+          .value +
+        48 +
+        1 +
+        'px'
+      : '748px',
+    height: cacheNodes.normalAndAdditionalView[indexTabs]
+      ? cacheNodes.normalAndAdditionalView[indexTabs].model.config.html.height
           .value +
         48 +
         1 +
@@ -320,7 +344,14 @@
   }"
   [nzBodyStyle]="{
     width: cacheNodes.normalAndAdditionalView[indexTabs]
-      ? cacheNodes.normalAndAdditionalView[indexTabs].model.config.css.width
+      ? cacheNodes.normalAndAdditionalView[indexTabs].model.config.html.width
+          .value +
+        48 +
+        1 +
+        'px'
+      : '748px',
+    height: cacheNodes.normalAndAdditionalView[indexTabs]
+      ? cacheNodes.normalAndAdditionalView[indexTabs].model.config.html.height
           .value +
         48 +
         1 +

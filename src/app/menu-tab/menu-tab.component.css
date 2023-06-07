@@ -2,10 +2,12 @@ img {
   cursor: pointer;
   margin-right: 8px;
 }
+.menu-tab {
+  float: left;
+}
 .menu-tab p {
   background-color: #fafafa;
   padding: 5px;
-  margin-bottom: 0;
 }
 
 .btn {
@@ -15,4 +17,25 @@ img {
 }
 .menu-node {
   font-size: 18px;
+}
+
+.menu-list::-webkit-scrollbar {
+  width: 0px;
+  height: 0px;
+  background-color: #f5f5f5;
+}
+
+/*定义滚动条轨道 内阴影+圆角*/
+.menu-list::-webkit-scrollbar-track {
+  background-color: #17df0945;
+}
+
+/*定义滑块 内阴影+圆角*/
+.menu-list::-webkit-scrollbar-thumb {
+  background-color: #ff0;
+}
+
+.menu-list::-webkit-scrollbar-button {
+  width: 0;
+  background-color: red;
 }

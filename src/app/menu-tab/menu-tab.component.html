@@ -1,136 +1,128 @@
 <div
   style="
-    width: 200px;
     position: fixed;
     top: 0;
     left: 0;
     z-index: 3001;
-    background: white;
-    height: -webkit-fill-available;
+    background: #fff0;
+    height: 68px;
+    width: 100%;
+    display: flex;
+    width: calc(100vw - 345px);
+    border-right: 1px solid #00ff7f;
   "
 >
-  <i
-    title="保存数据"
-    nz-icon
-    nzType="cloud-upload"
-    nzTheme="outline"
-    width="20px"
-    class="btn"
-    style="color: #0093ff"
-    (click)="cacheVisible = true"
-  ></i>
-  <ng-template #contentTemplate>
-    <div>
-      <p>
-        配置名称：<input
-          nz-input
-          placeholder="请输入配置名称"
-          [(ngModel)]="configParams.tagName"
-        />
-      </p>
-      <p>
-        描述：<textarea
-          rows="4"
-          nz-input
-          placeholder="请输入配置相关描述"
-          [(ngModel)]="configParams.desc"
-        ></textarea>
-      </p>
-      <p style="text-align: right">
-        <button nz-button nzType="primary" (click)="cacheData($event)">
-          <span nz-icon nzType="cloud-upload"></span>
-          保存
-        </button>
-      </p>
-    </div>
-  </ng-template>
-  <i
-    title="恢复数据"
-    nz-icon
-    nzType="cloud-download"
-    nzTheme="outline"
-    style="color: #3ab428"
-    width="20px"
-    class="btn"
-    (click)="showComponentDialog()"
-  ></i>
-
-  <i
-    title="下载文件"
-    nz-icon
-    nzType="download"
-    nzTheme="outline"
-    width="20px"
-    style="color: #f5bf5d"
-    class="btn"
-    (click)="download($event)"
-  ></i>
-  <i
-    title="发布应用"
-    nz-icon
-    nzType="fork"
-    nzTheme="outline"
-    width="20px"
-    style="color: #c243b0"
-    class="btn"
-    (click)="publishAPP($event)"
-  ></i>
-  <i
-    title="整理节点"
-    nz-icon
-    nzType="appstore"
-    nzTheme="outline"
-    width="20px"
-    style="color: #2cd2e5"
-    class="btn"
-    (click)="gridNode($event)"
-  ></i>
-  <span style="float: right; margin-right: 14px">
+  <p style="display: inline-block; margin-bottom: 0; min-width: 200px">
     <i
-      title="切换视图"
+      title="保存数据"
       nz-icon
-      nzType="eye"
+      nzType="cloud-upload"
       nzTheme="outline"
       width="20px"
       class="btn"
-      style="color: #dc6c6c"
-      *ngIf="viewType == ViewTypes.view"
-      (click)="changeView($event)"
+      style="color: #0093ff"
+      (click)="cacheVisible = true"
     ></i>
     <i
-      *ngIf="viewType == ViewTypes.link"
-      title="切换视图"
+      title="恢复数据"
       nz-icon
-      nzType="api"
-      style="color: #b7b741"
+      nzType="cloud-download"
       nzTheme="outline"
+      style="color: #3ab428"
       width="20px"
       class="btn"
-      (click)="changeView($event)"
+      (click)="showComponentDialog()"
     ></i>
-  </span>
-  <div class="menu-tab" *ngFor="let menu of menuConfig">
-    <p>{{ menu[0] }}</p>
-    <span *ngFor="let btn of menu[1]">
+    <i
+      title="下载文件"
+      nz-icon
+      nzType="download"
+      nzTheme="outline"
+      width="20px"
+      style="color: #f5bf5d"
+      class="btn"
+      (click)="download($event)"
+    ></i>
+    <i
+      title="发布应用"
+      nz-icon
+      nzType="fork"
+      nzTheme="outline"
+      width="20px"
+      style="color: #c243b0"
+      class="btn"
+      (click)="publishAPP($event)"
+    ></i>
+    <i
+      title="整理节点"
+      nz-icon
+      nzType="appstore"
+      nzTheme="outline"
+      width="20px"
+      style="color: #2cd2e5"
+      class="btn"
+      (click)="gridNode($event)"
+    ></i>
+    <span>
       <i
-        draggable="true"
-        [title]="btn.title"
-        [id]="btn.id"
+        title="切换视图"
         nz-icon
-        [type]="btn.icon"
-        [comonentType]="btn.type"
-        [area]="btn.area"
-        [filesName]="btn.filesName"
-        [component]="btn.component"
-        [view]="btn.view || 0"
-        [node]="btn.node"
-        [layout]="btn.layout"
+        nzType="swap"
         nzTheme="outline"
         width="20px"
-        [ngStyle]="{ color: btn.color || 'btn' }"
-        class="btn menu-node"
+        class="btn"
+        style="color: #dc6c6c"
+        (click)="changeView($event)"
+      ></i>
+      <i
+        title="预览视图"
+        nz-icon
+        nzType="eye"
+        nzTheme="outline"
+        width="20px"
+        style="color: #2cd2e5"
+        class="btn"
+        (click)="preview()"
       ></i>
     </span>
+  </p>
+
+  <div
+    class="menu-list"
+    style="display: flex; overflow-x: auto; border-left: 2px solid #ff0"
+    #menuList
+    (wheel)="scrollX($event)"
+  >
+    <div
+      class="menu-tab"
+      style="display: inline-block; margin: 0 4px"
+      [ngStyle]="{ 'min-width': menu[1].length * 30 + 'px' }"
+      *ngFor="let menu of menuConfig"
+    >
+      <p style="margin-bottom: 0">{{ menu[0] }}</p>
+      <div>
+        <span *ngFor="let btn of menu[1]">
+          <i
+            draggable="true"
+            [title]="btn.title"
+            [id]="btn.id"
+            nz-icon
+            [type]="btn.icon"
+            [comonentType]="btn.type"
+            [area]="btn.area"
+            [filesName]="btn.filesName"
+            [component]="btn.component"
+            [view]="btn.view || 0"
+            [node]="btn.node"
+            [layout]="btn.layout"
+            nzTheme="outline"
+            width="20px"
+            [ngStyle]="{ color: btn.color || 'btn' }"
+            class="btn menu-node"
+          ></i>
+        </span>
+      </div>
+    </div>
   </div>
 </div>
 <!-- 缓存配置 -->

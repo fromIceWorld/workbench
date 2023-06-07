@@ -1,4 +1,10 @@
-import { Component, EventEmitter, OnInit, Output } from '@angular/core';
+import {
+  Component,
+  EventEmitter,
+  OnInit,
+  Output,
+  ViewChild,
+} from '@angular/core';
 import { CommunicationService } from '../communication.service';
 enum ViewTypes {
   view,
@@ -11,6 +17,7 @@ enum ViewTypes {
   providers: [CommunicationService],
 })
 export class MenuTabComponent implements OnInit {
+  @ViewChild('menuList') menuList;
   @Output() cache = new EventEmitter();
   @Output() recover = new EventEmitter();
   @Output() downloadEmit = new EventEmitter();
@@ -135,5 +142,26 @@ export class MenuTabComponent implements OnInit {
     console.log(JSON.parse(json));
     this.recover.emit(json);
     this.componentDialog = false;
+  }
+  scrollX(e) {
+    const { deltaY } = e;
+    if (deltaY > 0) {
+      this.menuList.nativeElement.scrollBy({
+        left: 500,
+        behavior: 'smooth',
+      });
+    } else {
+      this.menuList.nativeElement.scrollBy({
+        left: -500,
+        behavior: 'smooth',
+      });
+    }
+    e.preventDefault();
+  }
+  preview() {
+    let gridDOM = document.querySelector('.g6-grid-container');
+    let style = (gridDOM as any).style,
+      display = style.display;
+    style.display = display == '' ? 'none' : '';
   }
 }
