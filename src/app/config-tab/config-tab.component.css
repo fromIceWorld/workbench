@@ -22,6 +22,8 @@ p {
 }
 .tab-container {
   width: 340px;
+  overflow-y: auto;
+  height: calc(100vh - 68px);
 }
 [ng-reflect-nz-mode="default"] {
   background-color: #1890ff;

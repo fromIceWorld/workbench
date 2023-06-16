@@ -20,6 +20,7 @@ function registerCommon() {
             img: `
              ${img.base}
                 `,
+            cursor: 'pointer',
           },
           // 在 G6 3.3 及之后的版本中，必须指定 name，可以是任意字符串，但需要在同一个自定义元素类型中保持唯一性
           name: 'component',
@@ -37,8 +38,9 @@ function registerCommon() {
             // y: y - img.height / 2,
             stroke: '#fff0',
             fill: '#00ff0026',
-            width: width.value || img.width,
-            height: height.value || img.height,
+            width: width?.value || img.width,
+            height: height?.value || img.height,
+            cursor: 'pointer',
           },
           draggable: true,
           name: 'container', // 在 G6 3.3 及之后的版本中，必须指定 name，可以是任意字符串，但需要在同一个自定义元素类型中保持唯一性

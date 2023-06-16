@@ -124,6 +124,29 @@
       </div>
     </div>
   </div>
+
+  <div style="position: fixed; top: 0; right: 0">
+    <p>
+      <span>X轴：</span>
+      <nz-radio-group
+        [(ngModel)]="xLayout"
+        (ngModelChange)="layoutChange($event, 'x')"
+      >
+        <label nz-radio nzValue="absolute">absolute</label>
+        <label nz-radio nzValue="auto">auto</label>
+      </nz-radio-group>
+    </p>
+    <p>
+      <span>Y轴：</span
+      ><nz-radio-group
+        [(ngModel)]="yLayout"
+        (ngModelChange)="layoutChange($event, 'y')"
+      >
+        <label nz-radio nzValue="absolute">absolute</label>
+        <label nz-radio nzValue="auto">auto</label>
+      </nz-radio-group>
+    </p>
+  </div>
 </div>
 <!-- 缓存配置 -->
 <nz-modal

@@ -458,7 +458,11 @@ export class ViewTabComponent implements OnInit {
     });
     // 获取内层 graph的 节点的依赖
     this.cacheNodes.normalAndAdditionalView.forEach((item) => {
-      const { tabs } = item;
+      const { tabs, area, filesName } = item;
+      nodesModel.push({
+        area,
+        filesName,
+      });
       tabs.forEach((nodes) => {
         nodes.forEach((node) => {
           nodesModel.push({ ...node });
@@ -567,6 +571,7 @@ export class ViewTabComponent implements OnInit {
     this.js += `;${jsString}`;
   }
   downloadFile() {
+    console.time('计算及下载文件所需时间');
     this.exportData();
     let timeID = this.dataPipe.transform(new Date(), 'yyyy-MM-dd_HH-mm-ss');
     const htmlFile = `index${timeID}.html`,
@@ -646,6 +651,8 @@ export class ViewTabComponent implements OnInit {
     a.click();
     a.remove();
     URL.revokeObjectURL(href);
+    console.log('计时结束👇');
+    console.timeEnd('计算及下载文件所需时间');
     return;
   }
   publishAPP() {
@@ -656,7 +663,6 @@ export class ViewTabComponent implements OnInit {
   }
   //整理节点，使关系节点和视图节点排布匹配
   gridNode() {
-    console.log('整理节点');
     const relationNodes = this.relationshipGraph.getNodes();
     relationNodes.forEach((node) => {
       const id = node._cfg.id.split('-')[1];
@@ -700,7 +706,7 @@ export class ViewTabComponent implements OnInit {
       this.html += `</${tag}>`;
       this.js += js;
     });
-    // 处理虚拟节点
+    // 处理虚拟节点【message,api】
     this.cacheNodes.noView.forEach((virtual) => {
       const { tagName, model, nodes } = virtual;
       // 导出d虚拟节点
@@ -748,7 +754,6 @@ export class ViewTabComponent implements OnInit {
     );`;
     this.js += defineComponent;
     this.html = cacheTHIShTML;
-    console.log(defineComponent);
   }
   // 根据节点分配网格
   allocationGrid(nodesModel, containerWidth, containerHeight) {
@@ -760,18 +765,13 @@ export class ViewTabComponent implements OnInit {
         { width: cW, height: cH } = config.css,
         { width: imgWidth, height: imgHeight } = img;
       // 图片width/height，容器width/height 和 box 的 width/ height
-      const width = Math.max(boxWidth || 0, cW ? cW.value : 0, imgWidth || 0);
-      const height = Math.max(
-        boxHeight || 0,
-        cH ? cH.value : 0,
-        imgHeight || 0
-      );
+      const width = Math.max(boxWidth || 0, cW?.value || 0, imgWidth || 0);
+      const height = Math.max(boxHeight || 0, cH?.value || 0, imgHeight || 0);
       XAxisInterval[0] = Math.min(XAxisInterval[0], x);
       XAxisInterval[1] = Math.max(XAxisInterval[1], x + width);
       YAxisInterval[0] = Math.min(YAxisInterval[0], y);
       YAxisInterval[1] = Math.max(YAxisInterval[1], y + height);
     });
-    console.log(XAxisInterval, YAxisInterval);
     // 调整范围, 适应grid的精确度
     let gridXStart = XAxisInterval[0] - (XAxisInterval[0] % this.step),
       gridXEnd = XAxisInterval[1] - (XAxisInterval[1] % this.step) + this.step,
@@ -784,7 +784,6 @@ export class ViewTabComponent implements OnInit {
         .fill('*')
         .map(() => String(Math.floor(Math.random() * 1000000000000)))
     );
-    console.log(areas);
     // 节点区域染色
     window['areas'] = areas;
     nodesModel.forEach((model) => {
@@ -792,20 +791,20 @@ export class ViewTabComponent implements OnInit {
         { width: cW, height: cH } = config.css,
         { width: imgWidth, height: imgHeight } = img;
       // 图片width/height，容器width/height 和 box 的 width/ height
-      const width = Math.max(boxWidth || 0, cW ? cW.value : 0, imgWidth || 0);
-      const height = Math.max(
-        boxHeight || 0,
-        cH ? cH.value : 0,
-        imgHeight || 0
-      );
+      const width = Math.max(boxWidth || 0, cW?.value || 0, imgWidth || 0);
+      const height = Math.max(boxHeight || 0, cH?.value || 0, imgHeight || 0);
       let xAxis = [x - (x % this.step), x + width - ((x + width) % this.step)],
         yAxis = [y - (y % this.step), y + height - (height % this.step)];
       // 检查当前节点 覆盖的区域是否有其他节点
       // 将当前区域的节点 统一区域id
       let area = this.UUID();
       this.nodeMapArea.set(model, area);
-      for (let i = yAxis[0] / this.step; i <= yAxis[1] / this.step; i++) {
-        for (let j = xAxis[0] / this.step; j <= xAxis[1] / this.step; j++) {
+      for (let i = yAxis[0] / this.step; i < yAxis[1] / this.step; i++) {
+        for (let j = xAxis[0] / this.step; j < xAxis[1] / this.step; j++) {
+          // 越界
+          if (areas[i] == undefined || areas[i][j] == undefined) {
+            continue;
+          }
           // 当前节点所要染色的区域内，若有其他节点
           if (isNaN(Number(areas[i][j]))) {
             this.nodeMapArea.set(areas[i][j], area);
@@ -834,14 +833,25 @@ export class ViewTabComponent implements OnInit {
       areaNodes.push(model);
     });
     let gridTemplate = areas.map((row) => `'${row.join(' ')}'`).join('\n');
+    // 区域布局模式： 自适应/绝对
+    const xLayout = localStorage.getItem('x'),
+      yLayout = localStorage.getItem('y');
+    let gridRow =
+      yLayout == 'absolute'
+        ? `grid-template-rows: repeat(${Math.floor(
+            containerHeight / this.step
+          )}, ${this.step}px);`
+        : '';
+    let gridColumns =
+      xLayout == 'absolute'
+        ? `grid-template-columns: repeat(${Math.floor(
+            containerWidth / this.step
+          )}, ${this.step}px);`
+        : '';
     this.html += `<div style="display:grid;
                     grid-template-areas:${gridTemplate};
-                    grid-template-rows: repeat(${Math.floor(
-                      containerHeight / this.step
-                    )}, ${this.step}px);
-                    grid-template-columns: repeat(${Math.floor(
-                      containerWidth / this.step
-                    )},  ${this.step}px);">`;
+                    ${gridRow}
+                    ${gridColumns}">`;
     // 区域包裹node
     for (let [area, nodesModel] of this.areaMapNodes.entries()) {
       let childHtml = ``;
@@ -860,22 +870,22 @@ export class ViewTabComponent implements OnInit {
           padding[0] = Math.min(padding[0], y % this.step);
           padding[1] = Math.min(
             padding[1],
-            (Math.floor((x + Math.max(width, cW ? cW.value : 0)) / this.step) +
+            (Math.floor((x + Math.max(width, cW?.value || 0)) / this.step) +
               1) *
               this.step -
-              (x + Math.max(width, cW ? cW.value : 0))
+              (x + Math.max(width, cW?.value || 0))
           );
           padding[2] = Math.min(
             padding[2],
-            (Math.floor((y + Math.max(height, cH ? cH.value : 0)) / this.step) +
+            (Math.floor((y + Math.max(height, cH?.value || 0)) / this.step) +
               1) *
               this.step -
-              (y + Math.max(height, cH ? cH.value : 0))
+              (y + Math.max(height, cH?.value || 0))
           );
           padding[3] = Math.min(padding[3], x % this.step);
         });
       this.html += `<div style="grid-area:${area};padding:${padding
-        .map((pad) => pad + 'px')
+        .map((pad) => Math.max(pad, 0) + 'px')
         .join(' ')}">`;
       this.html += childHtml;
       this.html += '</div>';
@@ -902,7 +912,6 @@ export class ViewTabComponent implements OnInit {
       tabs.forEach((tab, index) => {
         let slotTag = `my-component-${String(Math.random()).slice(2)}`;
         htmlS += `<${slotTag} slot='slot${index}'>`;
-        console.log(`<${slotTag} slot='slot${index}'>`);
         this.newWebComponent(
           slotTag,
           tab,
@@ -1015,8 +1024,14 @@ export class ViewTabComponent implements OnInit {
       config = model.config,
       { className } = config;
     const { type } = model;
+    // 优化，数据未修改时，不更新
+    if (
+      JSON.stringify(model.config.html) == JSON.stringify(htmlConfig) &&
+      JSON.stringify(model.config.css) == JSON.stringify(cssConfig)
+    ) {
+      return;
+    }
     // box类型的节点无组件,直接更新节点
-
     if (type == 'box') {
       const model2 = {
         ...model,
@@ -1107,8 +1122,8 @@ export class ViewTabComponent implements OnInit {
   closeDialog(e) {
     this.focusNode = null;
     this.bus.center.next({
-      html: {},
-      css: {},
+      html: JSON.stringify({}),
+      css: JSON.stringify({}),
       type: 'config',
     });
     this.dialogConfigVisible = false;
@@ -1181,10 +1196,9 @@ export class ViewTabComponent implements OnInit {
         focus: {
           lineWidth: 1,
           stroke: '#1085cac9',
-          shadowOffsetX: 1,
-          shadowOffsetY: 1,
-          shadowColor: '#74b8e196',
-          radius: 2,
+          // shadowOffsetX: 1,
+          // shadowOffsetY: 1,
+          // shadowColor: '#74b8e196',
         },
       },
       defaultNode: {
@@ -1215,12 +1229,10 @@ export class ViewTabComponent implements OnInit {
     this.graphAddEventListener(this.dialogGraph);
   }
   initTabs() {
-    console.log(this.tabs);
     this.tabsGraphs = new Array(this.tabs.length);
     this.createTabGraph(0);
   }
   createTabGraph(index) {
-    console.log(this.tabs);
     this.tabsGraphs = new Array(this.tabs.length);
     let dom = this.tabs._results[index].nativeElement;
     dom.replaceChildren();
@@ -1480,7 +1492,6 @@ export class ViewTabComponent implements OnInit {
       // TODO:配置背景色
     });
     graph.on('node:click', (evt) => {
-      console.log('node');
       this.focusCombo = null;
       const { item } = evt,
         { html, css } = item._cfg.model.config;
@@ -1488,25 +1499,12 @@ export class ViewTabComponent implements OnInit {
       this.focus(item); //focus当前节点
       this.focusNode = item;
       this.bus.center.next({
-        html,
-        css,
+        html: JSON.stringify(html),
+        css: JSON.stringify(css),
         type: 'config',
       });
       this.onEdit(false);
     });
-    graph.on('combo:click', (evt) => {
-      // 展示combo  json 数据
-      const { item } = evt,
-        { html, css } = item._cfg.model.config;
-      this.focusCombo = item;
-      this.bus.center.next({
-        html,
-        css,
-        type: 'config',
-      });
-      this.onEdit(false);
-    });
-
     graph.on('canvas:mousemove', (evt) => {
       if (this.control) {
         if (this.clickCount == 1) {
@@ -1682,8 +1680,8 @@ export class ViewTabComponent implements OnInit {
   }
   clearConfig() {
     this.bus.center.next({
-      html: {},
-      css: {},
+      html: JSON.stringify({}),
+      css: JSON.stringify({}),
       type: 'config',
     });
   }
@@ -2023,8 +2021,8 @@ export class ViewTabComponent implements OnInit {
     const { html, css } = view[index].model.config;
     this.unFocus(this.focusNode);
     this.bus.center.next({
-      html,
-      css,
+      html: JSON.stringify(html),
+      css: JSON.stringify(css),
       type: 'config',
     });
     this.onEdit(false);
@@ -2035,7 +2033,6 @@ export class ViewTabComponent implements OnInit {
       return node.get('model').id === model.id.replace('view', 'relation');
     });
     this.relationshipGraph.removeItem(relationNode);
-    console.log('getNodes', this.graph.getNodes());
     const viewNode = this.graph.find('node', (node) => {
       return node.get('model').id === model.id;
     });
@@ -2145,7 +2142,6 @@ export class ViewTabComponent implements OnInit {
         }
       }
     });
-    console.log(this.areaNodesModel, this.aloneNodesModel);
     // 组合布局
     this.deepGrid(
       [
@@ -2185,23 +2181,26 @@ export class ViewTabComponent implements OnInit {
         { width: cW, height: cH } = config.css,
         { width: imgWidth, height: imgHeight } = img;
       // 图片width/height，容器width/height 和 box 的 width/ height
-      const width = Math.max(boxWidth || 0, cW ? cW.value : 0, imgWidth || 0);
-      const height = Math.max(
-        boxHeight || 0,
-        cH ? cH.value : 0,
-        imgHeight || 0
-      );
+      const width = Math.max(boxWidth || 0, cW?.value || 0, imgWidth || 0);
+      const height = Math.max(boxHeight || 0, cH?.value || 0, imgHeight || 0);
       XAxisInterval[0] = Math.min(XAxisInterval[0], x);
       XAxisInterval[1] = Math.max(XAxisInterval[1], x + width);
       YAxisInterval[0] = Math.min(YAxisInterval[0], y);
       YAxisInterval[1] = Math.max(YAxisInterval[1], y + height);
     });
     // 根据width，height和 精准度 创建grid区域
-    let areas = Array.from(new Array(containerHeight / this.step), () =>
-      new Array(containerWidth / this.step)
-        .fill('*')
-        .map(() => String(Math.floor(Math.random() * 1000000000000)))
-    );
+    let areas = new Array(containerHeight / this.step)
+      .fill('*')
+      .map((item, i) => {
+        return new Array(containerWidth / this.step)
+          .fill('*')
+          .map((item2, ii) => i * (containerWidth / this.step) + ii);
+      });
+    // let areas = Array.from(new Array(containerHeight / this.step), () =>
+    //   new Array(containerWidth / this.step)
+    //     .fill('*')
+    //     .map(() => String(Math.floor(Math.random() * 1000000000000)))
+    // );
     // 给节点区域染色
     nodesModel.forEach((model) => {
       const { x, y, img, config } = model,
@@ -2210,26 +2209,30 @@ export class ViewTabComponent implements OnInit {
       let xAxis = [
           x - (x % this.step) - originX,
           x +
-            Math.max(width, cW ? cW.value : 0) -
-            ((x + Math.max(width, cW ? cW.value : 0)) % this.step) -
+            Math.max(width, cW?.value || 0) -
+            ((x + Math.max(width, cW?.value || 0)) % this.step) +
+            this.step -
             originX,
         ],
         yAxis = [
           y - (y % this.step) - originY,
           y +
-            Math.max(height, cH ? cH.value : 0) -
-            ((y + Math.max(height, cH ? cH.value : 0)) % this.step) -
+            Math.max(height, cH?.value || 0) -
+            ((y + Math.max(height, cH?.value || 0)) % this.step) +
+            this.step -
             originY,
         ];
       // 检查当前节点 覆盖的区域是否有其他节点
       // 将当前区域的节点 统一区域id
       let areaID = this.nodeMapArea.get(model) || this.UUID();
       this.nodeMapArea.set(model, areaID);
-      for (let i = yAxis[0] / this.step; i <= yAxis[1] / this.step; i++) {
-        for (let j = xAxis[0] / this.step; j <= xAxis[1] / this.step; j++) {
+      for (let i = yAxis[0] / this.step; i < yAxis[1] / this.step; i++) {
+        for (let j = xAxis[0] / this.step; j < xAxis[1] / this.step; j++) {
+          // // 越界
+          if (areas[i] == undefined || areas[i][j] == undefined) {
+            continue;
+          }
           // 当前节点所要染色的区域内，若有其他节点
-          console.log(i, yAxis[0] / this.step, yAxis[1] / this.step, areas);
-          console.log(j, xAxis[0] / this.step, xAxis[1] / this.step, areas);
           if (isNaN(Number(areas[i][j]))) {
             this.nodeMapArea.set(areas[i][j], areaID);
           } else {
@@ -2259,19 +2262,29 @@ export class ViewTabComponent implements OnInit {
       areaNodes.push(model);
     });
     let gridTemplate = areas.map((row) => `'${row.join(' ')}'`).join('\n');
+    // 区域布局模式： 自适应/绝对
+    const xLayout = localStorage.getItem('x'),
+      yLayout = localStorage.getItem('y');
+    let gridRow =
+      yLayout == 'absolute'
+        ? `grid-template-rows: repeat(${Math.floor(
+            containerHeight / this.step
+          )}, ${this.step}px);`
+        : '';
+    let gridColumns =
+      xLayout == 'absolute'
+        ? `grid-template-columns: repeat(${Math.floor(
+            containerWidth / this.step
+          )}, ${this.step}px);`
+        : '';
     // 绘制当前区域 grid图
     this.html += `<div style="display:grid;
                     grid-template-areas:${gridTemplate};
-                    grid-template-rows: repeat(${Math.floor(
-                      containerHeight / this.step
-                    )}, ${this.step}px);
-                    grid-template-columns: repeat(${Math.floor(
-                      containerWidth / this.step
-                    )},  ${this.step}px);">`;
+                    ${gridRow}
+                    ${gridColumns}">`;
     // 生成当前区域节点的代码
     const area2Nodes = Array.from(this.areaMapNodes.entries());
     for (let [areaID, nodesModel] of area2Nodes) {
-      debugger;
       let childHtml = ``;
       // 精细布局pdding。
       let padding = [Infinity, Infinity, Infinity, Infinity];
@@ -2285,23 +2298,23 @@ export class ViewTabComponent implements OnInit {
           padding[0] = Math.min(padding[0], y % this.step);
           padding[1] = Math.min(
             padding[1],
-            (Math.floor((x + Math.max(width, cW ? cW.value : 0)) / this.step) +
+            (Math.floor((x + Math.max(width, cW?.value || 0)) / this.step) +
               1) *
               this.step -
-              (x + Math.max(width, cW ? cW.value : 0))
+              (x + Math.max(width, cW?.value || 0))
           );
           padding[2] = Math.min(
             padding[2],
-            (Math.floor((y + Math.max(height, cH ? cH.value : 0)) / this.step) +
+            (Math.floor((y + Math.max(height, cH?.value || 0)) / this.step) +
               1) *
               this.step -
-              (y + Math.max(height, cH ? cH.value : 0))
+              (y + Math.max(height, cH?.value || 0))
           );
           padding[3] = Math.min(padding[3], x % this.step);
         });
       // 使用 area 包裹内部的节点
       this.html += `<div style="grid-area:${areaID};padding:${padding
-        .map((pad) => pad + 'px')
+        .map((pad) => Math.max(pad, 0) + 'px')
         .join(' ')}">`;
       nodesModel
         .sort((model1, model2) => model1.x - model2.x)
@@ -2316,17 +2329,17 @@ export class ViewTabComponent implements OnInit {
           // padding[0] = Math.min(padding[0], y % this.step);
           // padding[1] = Math.min(
           //   padding[1],
-          //   (Math.floor((x + Math.max(width, cW ? cW.value : 0)) / this.step) +
+          //   (Math.floor((x + Math.max(width,  cW?.value || 0)) / this.step) +
           //     1) *
           //     this.step -
-          //     (x + Math.max(width, cW ? cW.value : 0))
+          //     (x + Math.max(width,  cW?.value || 0))
           // );
           // padding[2] = Math.min(
           //   padding[2],
-          //   (Math.floor((y + Math.max(height, cH ? cH.value : 0)) / this.step) +
+          //   (Math.floor((y + Math.max(height,  cH?.value || 0)) / this.step) +
           //     1) *
           //     this.step -
-          //     (y + Math.max(height, cH ? cH.value : 0))
+          //     (y + Math.max(height,  cH?.value || 0))
           // );
           // padding[3] = Math.min(padding[3], x % this.step);
         });
@@ -2342,7 +2355,7 @@ export class ViewTabComponent implements OnInit {
   }
   UUID() {
     let s = '';
-    for (let i = 0; i <= 25; i++) {
+    for (let i = 0; i <= 5; i++) {
       let index = Math.floor(Math.random() * 26);
       s += String.fromCharCode(index + 97);
     }

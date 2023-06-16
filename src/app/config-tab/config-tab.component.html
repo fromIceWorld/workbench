@@ -66,6 +66,7 @@
         *ngIf="inputVisible"
         type="text"
         [(ngModel)]="inputValue"
+        autocomplete="on"
         style="width: 78px"
         (blur)="handleInputConfirm(html[key], 'options')"
         (keydown.enter)="handleInputConfirm(html[key], 'options')"
@@ -214,6 +215,16 @@
         [nzStep]="1"
         (nzBlur)="updateConfig($event)"
       ></nz-input-number>
+    </span>
+    <span *ngIf="html[key].type === 'color'">
+      <input
+        type="color"
+        style="width: 42px; cursor: pointer"
+        nz-input
+        [(ngModel)]="html[key].value"
+        (focus)="updateFocus($event)"
+        (blur)="updateBlur($event)"
+      />
     </span>
     <span *ngIf="html[key].type === 'icon'">
       <nz-radio-group

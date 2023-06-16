@@ -24,6 +24,8 @@ export class MenuTabComponent implements OnInit {
   @Output() publish = new EventEmitter();
   @Output() grid = new EventEmitter();
   @Output() change = new EventEmitter();
+  xLayout = localStorage.getItem('x') || 'auto';
+  yLayout = localStorage.getItem('y') || 'auto';
   cacheVisible = false;
   ViewTypes = ViewTypes;
   cacheDialog = false;
@@ -52,6 +54,10 @@ export class MenuTabComponent implements OnInit {
         this.currentPageList = this.componentList.slice(0, 10);
       }
     });
+  }
+  layoutChange(e, xy) {
+    // 记录布局模式: 自适应/绝对定位。默认自适应
+    localStorage.setItem(xy, e);
   }
   getMenuList() {
     this.service.getMenus().subscribe((res: any) => {
@@ -148,7 +154,6 @@ export class MenuTabComponent implements OnInit {
     if (deltaY > 0) {
       this.menuList.nativeElement.scrollBy({
         left: 500,
-        behavior: 'smooth',
       });
     } else {
       this.menuList.nativeElement.scrollBy({

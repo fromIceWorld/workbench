@@ -7,7 +7,7 @@
   <div
     id="design-view"
     #design
-    style="width: 1920px; height: 1080px"
+    style="width: 1920px; height: 1080px; border: 1px solid rgba(0, 0, 0, 0.06)"
     [style]="{ display: tabView == 'design-view' ? 'block' : 'none' }"
   ></div>
   <!-- 逻辑图 -->
@@ -338,6 +338,7 @@
       ? cacheNodes.normalAndAdditionalView[indexTabs].model.config.html.height
           .value +
         48 +
+        +36 +
         1 +
         'px'
       : '748px'
@@ -354,9 +355,11 @@
       ? cacheNodes.normalAndAdditionalView[indexTabs].model.config.html.height
           .value +
         48 +
+        +36 +
         1 +
         'px'
-      : '748px'
+      : '748px',
+    'padding-top': 0
   }"
   [(nzVisible)]="tabsConfigDialog"
   [nzTitle]="'tabs配置'"
@@ -375,7 +378,10 @@
           .html.tabs.options
       "
       [nzTitle]="tab"
-      ><div #tabs style="position: relative"></div
+      ><div
+        #tabs
+        style="position: relative; border-bottom: 1px solid #f0f0f0"
+      ></div
     ></nz-tab>
   </nz-tabset>
 </ng-template>

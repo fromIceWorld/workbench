@@ -1,37 +1,7 @@
 import G6 from '../../../g6.min.js';
-import { measureText, NODE_CONFIG } from './node/base/index.js';
+import { measureText } from './node/base/index.js';
 
 // 独属于每一个节点的render函数，在G6中会被抹除，通过原型保存
-class TEXT_CONFIG extends NODE_CONFIG {
-  className = 'TextComponent';
-  html = {
-    text: {
-      type: 'string',
-      value: '姓名',
-    },
-  };
-  css = {
-    'font-size': {
-      type: 'number',
-      value: 14,
-      postfix: 'px',
-    },
-    color: {
-      type: 'string',
-      value: 'black',
-    },
-  };
-  component = {
-    event: [],
-    methods: [
-      { label: 'showChange', value: 'showChange' },
-      { label: 'show', value: 'show' },
-      { label: 'hide', value: 'hide' },
-    ],
-    data: [{ label: 'text', value: 'text' }],
-    params: [{ label: 'text', value: 'text' }],
-  };
-}
 function registerText() {
   G6.registerNode(
     'text',
@@ -40,7 +10,7 @@ function registerText() {
         const self = this,
           { html, css } = cfg.config,
           text = html.value.value,
-          fontSize = css['font-size'].value + css['font-size'].postfix;
+          fontSize = html['fontSize'].value + html['fontSize'].postfix;
         // 获取配置中的 Combo 内边距
         cfg.padding = [5, 5, 5, 5];
         // 获取样式配置，style.width 与 style.height 对应 rect Combo 位置说明图中的 width 与 height
@@ -61,8 +31,8 @@ function registerText() {
       afterDraw(cfg, group) {
         const { html, css } = cfg.config,
           text = html.value.value,
-          fontSize = css['font-size'].value + css['font-size'].postfix,
-          color = css['color'].value,
+          fontSize = html['fontSize'].value + html['fontSize'].postfix,
+          color = html['color'].value,
           width = measureText(text, fontSize);
         group.addShape('text', {
           id: 'text',
@@ -70,10 +40,10 @@ function registerText() {
             text: text,
             x: -(width + 10) / 2 + 5,
             y: 2,
-            fontSize: css['font-size'].value,
+            fontSize: html['fontSize'].value,
             textAlign: 'start',
             textBaseline: 'middle',
-            fill: 'red',
+            fill: color,
           },
           // must be assigned in G6 3.3 and later versions. it can be any value you want
           name: 'text-shape',
@@ -83,8 +53,8 @@ function registerText() {
       update(cfg, node) {
         const { html, css } = cfg.config,
           text = html.value.value,
-          fontSize = css['font-size'].value + css['font-size'].postfix,
-          color = css['color'].value,
+          fontSize = html['fontSize'].value + html['fontSize'].postfix,
+          color = html['color'].value,
           textLength = measureText(text, fontSize),
           group = node.get('group');
         let textShape, box;

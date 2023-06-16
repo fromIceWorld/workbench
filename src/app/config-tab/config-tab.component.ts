@@ -17,12 +17,12 @@ export class ConfigTabComponent implements OnInit {
   css = {};
   editIndex;
   constructor(@Inject('bus') private bus) {
-    console.log('初始化接收');
+    console.log('订阅编辑事件总线.');
     this.bus.center.subscribe((res: any) => {
       const { html, css, type } = res;
       if (type === 'config') {
-        this.html = html;
-        this.css = css;
+        this.html = JSON.parse(html);
+        this.css = JSON.parse(css);
       }
     });
   }
