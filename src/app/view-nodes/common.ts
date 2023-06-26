@@ -16,6 +16,7 @@ function registerCommon() {
             height: img.height,
             x: 0,
             y: 0,
+            opacity: 0.4,
             // DOM's html
             img: `
              ${img.base}

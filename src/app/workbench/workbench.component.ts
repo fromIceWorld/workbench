@@ -29,8 +29,10 @@ export class WorkbenchComponent implements OnInit {
     this.view.gridNode();
   }
   changeView(e) {
-    console.log(this.view.tabView);
     this.view.changeView();
+  }
+  changeSize(e) {
+    this.view.changeSize(e);
   }
   setConfig(e) {
     const { html, css } = e;

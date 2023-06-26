@@ -2353,6 +2353,11 @@ export class ViewTabComponent implements OnInit {
     this.areaMapNodes.clear();
     this.html += '</div>';
   }
+  changeSize(e) {
+    const { width, height } = e;
+    this.graph.changeSize(width, height);
+    this.tabView = 'design-view';
+  }
   UUID() {
     let s = '';
     for (let i = 0; i <= 5; i++) {

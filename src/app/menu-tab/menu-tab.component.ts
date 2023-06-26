@@ -5,6 +5,7 @@ import {
   Output,
   ViewChild,
 } from '@angular/core';
+import { NzMessageService } from 'ng-zorro-antd/message';
 import { CommunicationService } from '../communication.service';
 enum ViewTypes {
   view,
@@ -24,6 +25,9 @@ export class MenuTabComponent implements OnInit {
   @Output() publish = new EventEmitter();
   @Output() grid = new EventEmitter();
   @Output() change = new EventEmitter();
+  @Output() resize = new EventEmitter();
+  width = 1920;
+  height = 1080;
   xLayout = localStorage.getItem('x') || 'auto';
   yLayout = localStorage.getItem('y') || 'auto';
   cacheVisible = false;
@@ -40,8 +44,13 @@ export class MenuTabComponent implements OnInit {
   menuConfig = [];
   pageIndex = 1;
   currentPageList = [];
-  constructor(private service: CommunicationService) {}
-
+  constructor(
+    private service: CommunicationService,
+    private message: NzMessageService
+  ) {}
+  onParamsBlur(id) {
+    console.log(this[id]);
+  }
   showComponentDialog() {
     this.getComponentConfig();
     this.componentDialog = true;
@@ -54,6 +63,18 @@ export class MenuTabComponent implements OnInit {
         this.currentPageList = this.componentList.slice(0, 10);
       }
     });
+  }
+  changeSize() {
+    console.log(this.width, this.height);
+    // @ts-ignore
+    if (this.width == '' || this.height == '') {
+      this.message.create('warning', '无效的输入!');
+    } else {
+      this.resize.emit({
+        width: this.width,
+        height: this.height,
+      });
+    }
   }
   layoutChange(e, xy) {
     // 记录布局模式: 自适应/绝对定位。默认自适应

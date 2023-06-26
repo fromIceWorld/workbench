@@ -8,11 +8,11 @@
     height: 68px;
     width: 100%;
     display: flex;
-    width: calc(100vw - 345px);
+    width: calc(100vw - 382px);
     border-right: 1px solid #00ff7f;
   "
 >
-  <p style="display: inline-block; margin-bottom: 0; min-width: 200px">
+  <p style="display: inline-block; margin-bottom: 0; width: 120px">
     <i
       title="保存数据"
       nz-icon
@@ -89,7 +89,7 @@
 
   <div
     class="menu-list"
-    style="display: flex; overflow-x: auto; border-left: 2px solid #ff0"
+    style="display: flex; overflow-x: auto; border-left: 2px solid #be00f054"
     #menuList
     (wheel)="scrollX($event)"
   >
@@ -125,6 +125,39 @@
     </div>
   </div>
 
+  <div
+    style="
+      position: fixed;
+      top: 0;
+      right: 210px;
+      padding: 0 16px;
+      border-left: 1px solid #00ff7f;
+      border-right: 1px solid #00ff7f;
+    "
+  >
+    <p style="margin-bottom: 1px">
+      <span style="display: inline-block; width: 54px">width：</span>
+      <nz-input-number
+        style="width: 80px"
+        [(ngModel)]="width"
+        [nzMin]="10"
+        [nzMax]="1920"
+        [nzStep]="1"
+        (nzBlur)="changeSize()"
+      ></nz-input-number>
+    </p>
+    <p style="margin-bottom: 1px">
+      <span>height：</span
+      ><nz-input-number
+        style="width: 80px"
+        [(ngModel)]="height"
+        [nzMin]="10"
+        [nzMax]="5000"
+        [nzStep]="1"
+        (nzBlur)="changeSize()"
+      ></nz-input-number>
+    </p>
+  </div>
   <div style="position: fixed; top: 0; right: 0">
     <p>
       <span>X轴：</span>
